@@ -13,6 +13,9 @@ import { HighlightDialogue, isHighlightDialogue } from '@/components/HighlightDi
 import { NFTMarket } from '@/components/NFTMarket';
 import { PixelWorld } from '@/game/components/PixelWorld';
 import { TutorialOverlay } from '@/components/TutorialOverlay';
+import { AchievementPopup } from '@/components/AchievementPopup';
+import { AchievementPanel } from '@/components/AchievementPanel';
+import { ACHIEVEMENTS } from '@/data/achievements';
 import { useDramaStorySync } from '@/hooks/useDramaStorySync';
 import { agents } from '@/config/agents';
 import { scenes } from '@/config/scenes';
@@ -20,11 +23,17 @@ import { scenes } from '@/config/scenes';
 export default function Home() {
   const [activeTab, setActiveTab] = useState<'chat' | 'pixel' | 'nft'>('chat');
   const [showTutorialOverlay, setShowTutorialOverlay] = useState(false);
+  const [showAchievementPanel, setShowAchievementPanel] = useState(false);
 
   const {
     tutorialCompleted,
     hideTutorial,
     showTutorial,
+    achievements,
+    pendingAchievement,
+    dismissPendingAchievement,
+    checkAchievements,
+    nftProgress,
   } = useGameStore();
 
   // 检查是否需要显示教程（首次访问）
@@ -47,6 +56,21 @@ export default function Home() {
 
   // 剧情 → NFT故事线自动同步
   useDramaStorySync();
+
+  // 定期检查成就（每30秒检查一次，主要用于 play_time 成就）
+  useEffect(() => {
+    const interval = setInterval(() => {
+      checkAchievements();
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [checkAchievements]);
+
+  // NFT铸造后检查成就
+  useEffect(() => {
+    if (nftProgress.mintedAgents.length > 0) {
+      checkAchievements();
+    }
+  }, [nftProgress.mintedAgents.length, checkAchievements]);
 
   const { 
     currentScene, 
@@ -151,6 +175,19 @@ export default function Home() {
             <p className="text-sm text-gray-500">AI 真人秀世界 + NFT 市场</p>
           </div>
           
+          {/* 成就按钮 */}
+          <button
+            onClick={() => setShowAchievementPanel(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors"
+            title="查看成就"
+          >
+            <span className="text-sm">🏆</span>
+            <span className="text-sm font-bold text-amber-600">{achievements.totalPoints}</span>
+            <span className="text-xs text-amber-500/70 hidden sm:inline">
+              ({achievements.unlocked.length}/{ACHIEVEMENTS.length})
+            </span>
+          </button>
+
           {/* Tab 切换 */}
           <div className="flex gap-2">
             <button
@@ -418,6 +455,19 @@ export default function Home() {
           onComplete={handleTutorialComplete}
           onSkip={handleTutorialSkip}
         />
+      )}
+
+      {/* 成就弹窗 */}
+      {pendingAchievement && (
+        <AchievementPopup
+          achievement={pendingAchievement}
+          onDismiss={dismissPendingAchievement}
+        />
+      )}
+
+      {/* 成就面板 */}
+      {showAchievementPanel && (
+        <AchievementPanel onClose={() => setShowAchievementPanel(false)} />
       )}
     </div>
   );

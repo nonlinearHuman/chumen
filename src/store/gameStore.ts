@@ -3,6 +3,7 @@
 
 import { create } from 'zustand';
 import { Agent, Dialogue, Scene, DramaEvent } from '@/types/agent';
+import { ACHIEVEMENTS, Achievement } from '@/data/achievements';
 import { agents, getAgentById, getNPCs } from '@/config/agents';
 import { scenes, getSceneById } from '@/config/scenes';
 
@@ -10,6 +11,16 @@ import { scenes, getSceneById } from '@/config/scenes';
 const SAVE_VERSION = '1.0.0';
 const SAVE_KEY = 'chumen_save';
 const TUTORIAL_KEY = 'chumen_tutorial_completed';
+const ACHIEVEMENT_KEY = 'chumen_achievements';
+
+// 成就状态数据结构
+export interface AchievementState {
+  unlocked: string[]; // 已解锁成就ID
+  progress: Record<string, number>; // 各成就当前进度
+  totalPoints: number; // 总成就点数
+  visitedScenes: string[]; // 已访问的场景ID列表
+  npcTriggerCount: number; // NPC触发次数
+}
 
 // 存档数据结构
 export interface SaveData {
@@ -27,6 +38,7 @@ export interface SaveData {
     totalEvents: number;
     totalDialogues: number;
     playTime: number; // 毫秒
+    cumulativePlayTime: number; // 累计游玩时长（毫秒）
   };
 }
 
@@ -36,24 +48,33 @@ interface GameState {
   dialogues: Dialogue[];
   activeAgents: Agent[];
   dramaEvents: DramaEvent[];
-  
+
   // 控制
   isPlaying: boolean;
   speed: number; // 对话速度 (ms)
-  
+
   // 存档相关
   lastSaveTime: number | null;
   playStartTime: number | null;
+  cumulativePlayTime: number; // 累计游玩时长（毫秒）
   nftProgress: {
     mintedAgents: string[];
     unlockedStories: string[];
   };
-  
+
   // 教程相关
   tutorialCompleted: boolean;
   showTutorial: () => void;
   hideTutorial: () => void;
-  
+
+  // 成就相关
+  achievements: AchievementState;
+  pendingAchievement: Achievement | null; // 待显示的成就（弹窗用）
+  unlockAchievement: (id: string) => void;
+  updateProgress: (type: string, value: number) => void;
+  checkAchievements: () => void;
+  dismissPendingAchievement: () => void;
+
   // Actions
   setScene: (sceneId: string) => void;
   addDialogue: (agentId: string, content: string) => void;
@@ -61,7 +82,7 @@ interface GameState {
   stopGame: () => void;
   setSpeed: (speed: number) => void;
   addDramaEvent: (event: DramaEvent) => void;
-  
+
   // 存档方法
   saveGame: () => SaveData;
   loadGame: (save: SaveData) => boolean;
@@ -80,6 +101,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   speed: 5000, // 默认 5 秒发言一次
   lastSaveTime: null,
   playStartTime: null,
+  cumulativePlayTime: 0,
   nftProgress: {
     mintedAgents: [],
     unlockedStories: [],
@@ -95,11 +117,136 @@ export const useGameStore = create<GameState>((set, get) => ({
     useGameStore.setState({ tutorialCompleted: true });
   },
 
+  // 成就相关 - 初始状态（从localStorage恢复）
+  achievements: (() => {
+    try {
+      const saved = localStorage.getItem(ACHIEVEMENT_KEY);
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (e) {}
+    return {
+      unlocked: [],
+      progress: {},
+      totalPoints: 0,
+      visitedScenes: [],
+      npcTriggerCount: 0,
+    };
+  })(),
+  pendingAchievement: null,
+
+  // 成就方法
+  unlockAchievement: (id: string) => {
+    const state = get();
+    if (state.achievements.unlocked.includes(id)) return;
+
+    const achievement = ACHIEVEMENTS.find(a => a.id === id);
+    if (!achievement) return;
+
+    const newState = {
+      unlocked: [...state.achievements.unlocked, id],
+      totalPoints: state.achievements.totalPoints + achievement.points,
+    };
+
+    const newAchievements = { ...state.achievements, ...newState };
+    set({ achievements: newAchievements, pendingAchievement: achievement });
+    localStorage.setItem(ACHIEVEMENT_KEY, JSON.stringify(newAchievements));
+  },
+
+  updateProgress: (type: string, value: number) => {
+    const state = get();
+    const newProgress = { ...state.achievements.progress, [type]: value };
+
+    // 特殊处理：记录已访问场景
+    if (type === 'scene_visit') {
+      const sceneId = typeof value === 'string' ? value : '';
+      if (sceneId && !state.achievements.visitedScenes.includes(sceneId)) {
+        const newVisited = [...state.achievements.visitedScenes, sceneId];
+        set({
+          achievements: {
+            ...state.achievements,
+            progress: newProgress,
+            visitedScenes: newVisited,
+          }
+        });
+        localStorage.setItem(ACHIEVEMENT_KEY, JSON.stringify({
+          ...state.achievements,
+          progress: newProgress,
+          visitedScenes: newVisited,
+        }));
+        return;
+      }
+    }
+
+    set({ achievements: { ...state.achievements, progress: newProgress } });
+    localStorage.setItem(ACHIEVEMENT_KEY, JSON.stringify({
+      ...state.achievements,
+      progress: newProgress,
+    }));
+  },
+
+  checkAchievements: () => {
+    const state = get();
+    const { achievements } = state;
+
+    for (const achievement of ACHIEVEMENTS) {
+      if (achievements.unlocked.includes(achievement.id)) continue;
+
+      let currentValue = 0;
+
+      switch (achievement.requirement.type) {
+        case 'dialogue_count':
+          currentValue = state.dialogues.length;
+          break;
+        case 'npc_trigger':
+          currentValue = achievements.npcTriggerCount;
+          break;
+        case 'scene_visit':
+          currentValue = achievements.visitedScenes.length;
+          break;
+        case 'event_count':
+          currentValue = state.dramaEvents.length;
+          break;
+        case 'play_time':
+          currentValue = state.cumulativePlayTime + (state.playStartTime ? Date.now() - state.playStartTime : 0);
+          break;
+        case 'nft_mint':
+          currentValue = state.nftProgress.mintedAgents.length;
+          break;
+        case 'legendary_spawn':
+          currentValue = achievements.progress.legendary_spawn || 0;
+          break;
+        default:
+          currentValue = achievements.progress[achievement.requirement.type] || 0;
+      }
+
+      if (currentValue >= achievement.requirement.value) {
+        state.unlockAchievement(achievement.id);
+      }
+    }
+  },
+
+  dismissPendingAchievement: () => {
+    set({ pendingAchievement: null });
+  },
+
   // Actions
   setScene: (sceneId: string) => {
     const scene = getSceneById(sceneId);
     if (scene) {
-      set({ currentScene: scene });
+      // 记录已访问场景
+      const state = get();
+      if (!state.achievements.visitedScenes.includes(sceneId)) {
+        const newVisited = [...state.achievements.visitedScenes, sceneId];
+        const newProgress = { ...state.achievements.progress, scene_visit: newVisited.length };
+        const newAchievements = { ...state.achievements, visitedScenes: newVisited, progress: newProgress };
+        set({ currentScene: scene, achievements: newAchievements });
+        localStorage.setItem(ACHIEVEMENT_KEY, JSON.stringify(newAchievements));
+        // 检查成就
+        get().checkAchievements();
+      } else {
+        set({ currentScene: scene });
+      }
       // 切换场景时自动存档
       get().autoSave();
     }
@@ -116,6 +263,8 @@ export const useGameStore = create<GameState>((set, get) => ({
     set(state => ({
       dialogues: [...state.dialogues.slice(-50), newDialogue] // 保留最近50条
     }));
+    // 检查对话相关成就
+    get().checkAchievements();
   },
 
   startGame: () => {
@@ -123,7 +272,18 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   stopGame: () => {
-    set({ isPlaying: false });
+    // 停止时累加游玩时长
+    const state = get();
+    if (state.playStartTime) {
+      const elapsed = Date.now() - state.playStartTime;
+      set({
+        isPlaying: false,
+        playStartTime: null,
+        cumulativePlayTime: state.cumulativePlayTime + elapsed,
+      });
+    } else {
+      set({ isPlaying: false });
+    }
   },
 
   setSpeed: (speed: number) => {
@@ -134,19 +294,29 @@ export const useGameStore = create<GameState>((set, get) => ({
     set(state => ({
       dramaEvents: [...state.dramaEvents, event]
     }));
+    // 如果是NPC触发的事件，增加NPC触发计数
+    if (event.trigger === 'npc') {
+      const state = get();
+      const newCount = state.achievements.npcTriggerCount + 1;
+      const newProgress = { ...state.achievements.progress, npc_trigger: newCount };
+      const newAchievements = { ...state.achievements, npcTriggerCount: newCount, progress: newProgress };
+      set({ achievements: newAchievements });
+      localStorage.setItem(ACHIEVEMENT_KEY, JSON.stringify(newAchievements));
+    }
     // 重要事件后自动存档
     if (event.urgency === 'high' || event.type === 'big') {
       get().autoSave();
     }
+    // 检查事件相关成就
+    get().checkAchievements();
   },
 
   // 存档方法
   saveGame: () => {
     const state = get();
-    const playTime = state.playStartTime 
-      ? (state.playStartTime ? Date.now() - state.playStartTime : 0)
-      : 0;
-    
+    const playTime = state.playStartTime ? Date.now() - state.playStartTime : 0;
+    const cumulativePlayTime = state.cumulativePlayTime + playTime;
+
     const saveData: SaveData = {
       version: SAVE_VERSION,
       timestamp: Date.now(),
@@ -159,6 +329,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         totalEvents: state.dramaEvents.length,
         totalDialogues: state.dialogues.length,
         playTime,
+        cumulativePlayTime,
       },
     };
     
@@ -193,6 +364,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         nftProgress: save.nftProgress || { mintedAgents: [], unlockedStories: [] },
         lastSaveTime: save.timestamp,
         playStartTime: null, // 重置游玩计时
+        cumulativePlayTime: save.stats?.cumulativePlayTime || 0,
       });
       
       return true;
