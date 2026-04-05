@@ -1,10 +1,12 @@
-// 像素世界场景大气渲染器 v3
+// 像素世界场景大气渲染器 v4
 // SceneRenderer.ts - 每个场景独特的氛围感渲染
 // 包含：天空渐变、体积光、粒子效果、地板纹理、物体阴影
 // v3 新增：昼夜循环、天气系统
+// v4 新增：像素物体渲染系统
 
 import { DayNightCycle, TimeOfDay } from './DayNightCycle';
 import { WeatherSystem, Weather } from './WeatherSystem';
+import { SceneObjectRenderer, EMOJI_TO_OBJECT_TYPE, ObjectType, SceneObjectInstance } from './SceneObjects';
 
 export interface LightRay {
   x: number;           // 起始X（顶部为0）
@@ -158,6 +160,9 @@ export class SceneRenderer {
   private weatherSystem: WeatherSystem;
   private currentTime: TimeOfDay | null = null;
   private currentWeather: Weather | null = null;
+  
+  // v4: 像素物体渲染器
+  private objectRenderer: SceneObjectRenderer;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -165,8 +170,8 @@ export class SceneRenderer {
     this.height = canvas.height;
     this.dayNightCycle = new DayNightCycle();
     this.weatherSystem = new WeatherSystem();
+    this.objectRenderer = new SceneObjectRenderer();
   }
-
   // 切换场景时调用
   setScene(sceneId: string) {
     this.currentScene = sceneId;
@@ -417,13 +422,45 @@ export class SceneRenderer {
     ctx.fillRect(0, 0, this.width, this.height);
   }
 
-  // 渲染场景物体（带阴影）
+  // 渲染场景物体（v4 像素物体系统）
   drawObjects(
     ctx: CanvasRenderingContext2D,
-    objects: Array<{ emoji: string; x: number; y: number; width: number; height: number }>,
-    style: SceneStyle
+    objects: Array<{ id?: string; emoji: string; x: number; y: number; width: number; height: number; interactive?: boolean; objectType?: ObjectType }>,
+    style: SceneStyle,
+    usePixel: boolean = true
   ) {
     for (const obj of objects) {
+      // 如果启用像素模式且有物体类型定义，使用像素渲染
+      if (usePixel) {
+        const objectType = obj.objectType || EMOJI_TO_OBJECT_TYPE[obj.emoji];
+        
+        if (objectType) {
+          // 使用像素物体渲染
+          const instance: SceneObjectInstance = {
+            id: obj.id || `${obj.emoji}_${obj.x}_${obj.y}`,
+            objectType,
+            x: obj.x + obj.width / 2,
+            y: obj.y + obj.height / 2,
+            scale: Math.max(1.5, Math.min(3, obj.width / 20)), // 根据物体大小调整缩放
+            interactive: obj.interactive,
+          };
+          
+          this.objectRenderer.drawObject(ctx, instance, style.ambientColor);
+          
+          // 可交互物体高亮提示
+          if (obj.interactive) {
+            const pulse = Math.sin(this.time / 500) * 0.15 + 0.85;
+            ctx.strokeStyle = style.ambientColor + Math.floor(pulse * 80).toString(16).padStart(2, '0');
+            ctx.lineWidth = 2;
+            ctx.setLineDash([3, 3]);
+            ctx.strokeRect(obj.x - 5, obj.y - 5, obj.width + 10, obj.height + 10);
+            ctx.setLineDash([]);
+          }
+          continue;
+        }
+      }
+      
+      // 后备方案：emoji 渲染
       // 物体阴影
       ctx.fillStyle = 'rgba(0,0,0,0.3)';
       ctx.beginPath();
@@ -646,5 +683,7 @@ export class SceneRenderer {
     this.update(dt);
     // 更新天气系统
     this.weatherSystem.update(dt, this.width, this.height);
+    // 更新物体渲染器
+    this.objectRenderer.update(dt);
   }
 }

@@ -6,6 +6,7 @@ import { StoryEvent, Relationship, EVENT_TYPE_DESC } from '@/types/story';
 import { EventTrigger } from './EventTrigger';
 import { StoryGenerator } from '@/lib/storyGenerator';
 import { RelationshipEngine } from '@/lib/relationshipEngine';
+import { agents } from '@/config/agents';
 
 export interface UseStoryEngineReturn {
   currentEvent: StoryEvent | null;
@@ -29,14 +30,14 @@ export function useStoryEngine(): UseStoryEngineReturn {
   useEffect(() => {
     eventTriggerRef.current = new EventTrigger();
     storyGeneratorRef.current = new StoryGenerator();
-    relationshipEngineRef.current = new RelationshipEngine();
+    relationshipEngineRef.current = new RelationshipEngine(agents);
   }, []);
 
   // 检查事件触发
   const checkForEvents = useCallback(async (characters: any[], location: string) => {
     if (!eventTriggerRef.current) return;
 
-    const event = eventTriggerRef.current.checkTriggers(characters, location, relationships);
+    const event = eventTriggerRef.current.checkTriggers(characters, location);
     if (event) {
       // 生成对话
       if (storyGeneratorRef.current) {
@@ -48,15 +49,7 @@ export function useStoryEngine(): UseStoryEngineReturn {
       
       // 更新关系
       if (relationshipEngineRef.current) {
-        for (const consequence of event.consequences || []) {
-          if (consequence.type === 'relationship_change' && event.participants.length >= 2) {
-            relationshipEngineRef.current.updateRelationship(
-              event.participants[0],
-              event.participants[1],
-              consequence.value
-            );
-          }
-        }
+        relationshipEngineRef.current.applyConsequences(event);
         setRelationships(relationshipEngineRef.current.getAllRelationships());
       }
     }
@@ -70,8 +63,12 @@ export function useStoryEngine(): UseStoryEngineReturn {
   // 更新关系
   const updateRelationship = useCallback((charA: string, charB: string, change: number) => {
     if (relationshipEngineRef.current) {
-      relationshipEngineRef.current.updateRelationship(charA, charB, change);
-      setRelationships(relationshipEngineRef.current.getAllRelationships());
+      const relation = relationshipEngineRef.current.getRelationship(charA, charB);
+      if (relation) {
+        relation.sentiment = Math.max(-100, Math.min(100, relation.sentiment + change));
+        relation.strength = Math.min(100, relation.strength + Math.abs(change) * 0.5);
+        setRelationships(relationshipEngineRef.current.getAllRelationships());
+      }
     }
   }, []);
 

@@ -347,3 +347,6 @@ export function getEventTriggerSystem(config?: Partial<TriggerConfig>): EventTri
 export function resetEventTriggerSystem(): void {
   triggerInstance = null;
 }
+
+// 别名导出，保持向后兼容
+export { EventTriggerSystem as EventTrigger };
