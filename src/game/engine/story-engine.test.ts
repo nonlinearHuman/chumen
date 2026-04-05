@@ -130,6 +130,7 @@ async function main() {
       frameIndex: 0,
       lastFrameTime: 0,
       lastEmotionTime: 0,
+      lastFootstepTime: 0,
     },
     {
       id: 'sophia',
@@ -143,6 +144,7 @@ async function main() {
       frameIndex: 0,
       lastFrameTime: 0,
       lastEmotionTime: 0,
+      lastFootstepTime: 0,
     },
   ];
 
