@@ -12,11 +12,15 @@ import { MintCharacter } from './MintCharacter';
 
 type TabType = 'market' | 'my' | 'mint';
 
-export const NFTMarket: React.FC = () => {
-  const { 
-    listedNFTs, 
-    userNFTs, 
-    walletAddress, 
+type NFTMarketProps = {
+  isMobile?: boolean;
+};
+
+export const NFTMarket: React.FC<NFTMarketProps> = ({ isMobile = false }) => {
+  const {
+    listedNFTs,
+    userNFTs,
+    walletAddress,
     isConnected,
     connectWallet, 
     disconnectWallet,
@@ -119,7 +123,7 @@ export const NFTMarket: React.FC = () => {
   };
 
   return (
-    <div className="space-y-4">
+    <div className={`space-y-4 ${isMobile ? 'px-1' : ''}`}>
       {/* 钱包连接 */}
       <div className="bg-white rounded-xl shadow-lg p-4">
         <div className="flex items-center justify-between">

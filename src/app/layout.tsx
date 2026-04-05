@@ -17,6 +17,13 @@ export const metadata: Metadata = {
   description: "24/7 AI Agent 真人秀世界，NFT 交易平台",
 };
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{

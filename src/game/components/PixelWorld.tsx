@@ -12,9 +12,10 @@ import { WeatherType } from '../engine/WeatherSystem';
 interface PixelWorldProps {
   onDialogueStart?: () => void;
   onDialogueEnd?: () => void;
+  isMobile?: boolean;
 }
 
-export const PixelWorld: React.FC<PixelWorldProps> = ({ onDialogueStart, onDialogueEnd }) => {
+export const PixelWorld: React.FC<PixelWorldProps> = ({ onDialogueStart, onDialogueEnd, isMobile = false }) => {
   const {
     canvasRef,
     characters,
@@ -117,9 +118,31 @@ export const PixelWorld: React.FC<PixelWorldProps> = ({ onDialogueStart, onDialo
       <div className="relative rounded-xl overflow-hidden shadow-2xl border-4" style={{ borderColor: scene.accentColor }}>
         <canvas
           ref={canvasRef}
-          width={800}
-          height={600}
+          width={isMobile ? 360 : 800}
+          height={isMobile ? 300 : 600}
           onClick={handleCanvasClick}
+          onTouchStart={(e) => {
+            initAudio();
+            const touch = e.touches[0];
+            const canvas = canvasRef.current;
+            if (!canvas || !touch) return;
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const x = (touch.clientX - rect.left) * scaleX;
+            const y = (touch.clientY - rect.top) * scaleY;
+            for (const char of characters) {
+              const distance = Math.sqrt((char.x - x) ** 2 + (char.y - y) ** 2);
+              if (distance < 35) {
+                audioEngine.playSound('character_select');
+                setSelectedCharacter(char.id);
+                triggerDialogue(char.id);
+                onDialogueStart?.();
+                setTimeout(() => onDialogueEnd?.(), 3000);
+                break;
+              }
+            }
+          }}
           className="cursor-pointer bg-gray-900"
           style={{ imageRendering: 'pixelated' }}
         />
