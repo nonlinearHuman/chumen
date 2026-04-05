@@ -294,6 +294,61 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
           </div>
         </section>
 
+        {/* 快捷键帮助 */}
+        <section className="mb-6">
+          <h3 className="text-lg font-semibold mb-3">⌨️ 快捷键</h3>
+          <div className="space-y-1.5 text-sm">
+            <div className="flex items-center gap-2">
+              <kbd className="px-2 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">Space</kbd>
+              <span>开始 / 暂停</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <kbd className="px-2 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">Esc</kbd>
+              <span>关闭弹窗</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <kbd className="px-2 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">Ctrl+1</kbd>
+              <span>切换到会话</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <kbd className="px-2 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">Ctrl+2</kbd>
+              <span>切换到像素世界</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <kbd className="px-2 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">Ctrl+3</kbd>
+              <span>切换到NFT</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <kbd className="px-2 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">Ctrl+A</kbd>
+              <span>成就面板</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <kbd className="px-2 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">Ctrl+S</kbd>
+              <span>统计面板</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <kbd className="px-2 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">Ctrl+Shift+S</kbd>
+              <span>保存游戏</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <kbd className="px-2 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">Ctrl+D</kbd>
+              <span>每日挑战</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <kbd className="px-2 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">Ctrl+T</kbd>
+              <span>时间线</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <kbd className="px-2 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">Ctrl+R</kbd>
+              <span>关系图谱</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <kbd className="px-2 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">Ctrl+,</kbd>
+              <span>设置</span>
+            </div>
+          </div>
+        </section>
+
         {/* 数据管理 */}
         <section>
           <h3 className="text-lg font-semibold mb-3">💾 数据</h3>

@@ -7,6 +7,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useGameStore } from '@/store/gameStore';
 import { useAgentChat } from '@/hooks/useAgentChat';
 import { useNPCTigger } from '@/hooks/useNPCTigger';
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { AgentCard } from '@/components/AgentCard';
 import { DialogueBubble } from '@/components/DialogueBubble';
 import { HighlightDialogue, isHighlightDialogue } from '@/components/HighlightDialogue';
@@ -88,6 +89,54 @@ export default function Home() {
       checkAchievements();
     }
   }, [nftProgress.mintedAgents.length, checkAchievements]);
+
+  // 注册键盘快捷键
+  useKeyboardShortcuts({
+    onSetTab: (tab) => setActiveTab(tab),
+  });
+
+  // 监听键盘快捷键派发的自定义事件
+  useEffect(() => {
+    const handleCloseAll = () => {
+      setShowAchievementPanel(false);
+      setShowStats(false);
+      setShowSettings(false);
+      setShowRelationshipGraph(false);
+      setShowTimeline(false);
+    };
+    const handleToggleAchievements = () => setShowAchievementPanel(prev => !prev);
+    const handleToggleStats = () => setShowStats(prev => !prev);
+    const handleToggleDaily = () => {
+      const current = useGameStore.getState();
+      if (current.dailyState.showDailyPanel) {
+        current.dismissDailyPanel();
+      } else {
+        useGameStore.setState({
+          dailyState: { ...current.dailyState, showDailyPanel: true },
+        });
+      }
+    };
+    const handleToggleTimeline = () => setShowTimeline(prev => !prev);
+    const handleToggleRelationships = () => setShowRelationshipGraph(prev => !prev);
+    const handleToggleSettings = () => setShowSettings(prev => !prev);
+    const handleSaveSuccess = () => {
+      setSaveMessage('💾 已保存');
+      setTimeout(() => setSaveMessage(null), 2000);
+    };
+
+    const events: [string, () => void][] = [
+      ['chumen:close-all-modals', handleCloseAll],
+      ['chumen:toggle-achievements', handleToggleAchievements],
+      ['chumen:toggle-stats', handleToggleStats],
+      ['chumen:toggle-daily', handleToggleDaily],
+      ['chumen:toggle-timeline', handleToggleTimeline],
+      ['chumen:toggle-relationships', handleToggleRelationships],
+      ['chumen:toggle-settings', handleToggleSettings],
+      ['chumen:save-success', handleSaveSuccess],
+    ];
+    events.forEach(([type, handler]) => window.addEventListener(type, handler));
+    return () => events.forEach(([type, handler]) => window.removeEventListener(type, handler));
+  }, []);
 
   const { 
     currentScene, 
