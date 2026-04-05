@@ -7,7 +7,9 @@ import {
   PixelCharacter,
   DEFAULT_CHARACTERS,
   drawPixelSprite,
-  createPixelCharacter
+  createPixelCharacter,
+  getDirection8,
+  Direction8 as PixelDirection8
 } from './PixelSprite';
 import { audioEngine } from './AudioEngine';
 import { PostProcessor, PIXEL_RETRO_CONFIG } from './PostProcessing';
@@ -274,23 +276,8 @@ export const useGameEngine = () => {
       const newX = Math.max(80, Math.min(720, char.x + dx));
       const newY = Math.max(100, Math.min(500, char.y + dy));
 
-      let direction: Direction8 = 'down';
-      const adx = newX - char.x;
-      const ady = newY - char.y;
-      if (Math.abs(adx) > Math.abs(ady) * 1.5) {
-        direction = adx > 0 ? 'right' : 'left';
-      } else if (Math.abs(ady) > Math.abs(adx) * 1.5) {
-        direction = ady > 0 ? 'down' : 'up';
-      } else {
-        if (adx > 0 && ady < 0) direction = 'up_right';
-        else if (adx < 0 && ady < 0) direction = 'up_left';
-        else if (adx > 0 && ady > 0) direction = 'down_right';
-        else if (adx < 0 && ady > 0) direction = 'down_left';
-        else if (adx > 0) direction = 'right';
-        else if (adx < 0) direction = 'left';
-        else if (ady < 0) direction = 'up';
-        else direction = 'down';
-      }
+      // 使用 atan2 精确计算8方向
+      const direction = getDirection8(char.x, char.y, newX, newY);
 
       // 走路粒子（脚印）
       particleSystemRef.current?.burst(char.x, char.y + 20, 'footstep', 1);
@@ -462,21 +449,24 @@ export const useGameEngine = () => {
       });
     }
 
-    // 更新角色位置
+    // 更新角色位置 + 帧动画
     setCharacters(prev => prev.map(char => {
       const speed = 1.5;
       const dx = char.targetX - char.x;
       const dy = char.targetY - char.y;
       const distance = Math.sqrt(dx * dx + dy * dy);
 
+      // 帧动画计时
+      const frameDuration = 150; // ms per frame
       let newFrameIndex = char.frameIndex;
-      if (char.isMoving && now - char.lastFrameTime > 150) {
+      let newLastFrameTime = char.lastFrameTime;
+      if (char.isMoving && now - char.lastFrameTime > frameDuration) {
         newFrameIndex = (char.frameIndex + 1) % 4;
-        char.lastFrameTime = now;
+        newLastFrameTime = now;
       }
 
       if (distance < speed) {
-        return { ...char, x: char.targetX, y: char.targetY, isMoving: false, frameIndex: 0 };
+        return { ...char, x: char.targetX, y: char.targetY, isMoving: false, frameIndex: 0, lastFrameTime: newLastFrameTime };
       }
 
       return {
@@ -484,7 +474,7 @@ export const useGameEngine = () => {
         x: char.x + (dx / distance) * speed,
         y: char.y + (dy / distance) * speed,
         frameIndex: newFrameIndex,
-        lastFrameTime: char.lastFrameTime,
+        lastFrameTime: newLastFrameTime,
       };
     }));
 
@@ -503,7 +493,7 @@ export const useGameEngine = () => {
 
       if (sprite) {
         drawCtx.imageSmoothingEnabled = false;
-        drawPixelSprite(drawCtx, sprite, char.x, char.y, char.direction, char.frameIndex, 3);
+        drawPixelSprite(drawCtx, sprite, char.x, char.y, char.direction, char.frameIndex, char.isMoving, 3);
       } else {
         drawCtx.font = '40px Arial';
         drawCtx.textAlign = 'center';

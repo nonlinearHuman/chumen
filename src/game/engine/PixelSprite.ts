@@ -245,7 +245,7 @@ function darkenColor(hex: string, factor: number): string {
   return `#${dr.toString(16).padStart(2, '0')}${dg.toString(16).padStart(2, '0')}${db.toString(16).padStart(2, '0')}`;
 }
 
-// 绘制像素精灵到Canvas
+// 绘制像素精灵到Canvas（支持idle/移动动画）
 export function drawPixelSprite(
   ctx: CanvasRenderingContext2D,
   sprite: PixelCharacter,
@@ -253,9 +253,10 @@ export function drawPixelSprite(
   y: number,
   direction: string,
   frameIndex: number,
+  isMoving: boolean,
   scale: number = 3
 ) {
-  const frame = getFrame(sprite, direction, frameIndex);
+  const frame = getFrame(sprite, direction, frameIndex, isMoving);
   const pixelSize = scale;
   const halfW = (16 * pixelSize) / 2;
   const halfH = (16 * pixelSize) / 2;
@@ -285,12 +286,61 @@ export function drawPixelSprite(
   });
 }
 
-// 获取当前帧
-function getFrame(sprite: PixelCharacter, direction: string, frameIndex: number): PixelFrame {
-  const key = `walk_${direction}` as keyof typeof sprite.frames;
-  const frames = sprite.frames[key] || sprite.frames.walk_down;
+// 获取当前帧（支持idle/移动8方向）
+function getFrame(sprite: PixelCharacter, direction: string, frameIndex: number, isMoving: boolean): PixelFrame {
+  let frames: PixelFrame[];
+
+  if (isMoving) {
+    // 行走动画：walk_{direction}
+    const walkKey = `walk_${direction}` as keyof typeof sprite.frames;
+    frames = sprite.frames[walkKey] || sprite.frames.walk_down;
+  } else {
+    // 站立动画：idle_{primaryDirection}
+    // 斜向idle复用侧面帧
+    const primaryDir = getPrimaryDirection(direction);
+    const idleKey = `idle_${primaryDir}` as keyof typeof sprite.frames;
+    frames = sprite.frames[idleKey] || sprite.frames.idle;
+  }
+
   return frames[frameIndex % frames.length];
 }
+
+// 获取4方向主方向（斜向映射到侧面）
+function getPrimaryDirection(direction: string): string {
+  switch (direction) {
+    case 'up_left':
+    case 'down_left':
+    case 'left':
+      return 'left';
+    case 'up_right':
+    case 'down_right':
+    case 'right':
+      return 'right';
+    case 'up':
+    case 'down':
+    default:
+      return direction;
+  }
+}
+
+// 8方向计算：从(fromX,fromY)到(toX,toY)计算方向
+export function getDirection8(fromX: number, fromY: number, toX: number, toY: number): Direction8 {
+  const dx = toX - fromX;
+  const dy = toY - fromY;
+  const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+
+  if (angle >= -22.5 && angle < 22.5) return 'right';
+  if (angle >= 22.5 && angle < 67.5) return 'down_right';
+  if (angle >= 67.5 && angle < 112.5) return 'down';
+  if (angle >= 112.5 && angle < 157.5) return 'down_left';
+  if (angle >= 157.5 || angle < -157.5) return 'left';
+  if (angle >= -157.5 && angle < -112.5) return 'up_left';
+  if (angle >= -112.5 && angle < -67.5) return 'up';
+  if (angle >= -67.5 && angle < -22.5) return 'up_right';
+  return 'down';
+}
+
+export type Direction8 = 'up' | 'down' | 'left' | 'right' | 'up_left' | 'up_right' | 'down_left' | 'down_right';
 
 // 预定义角色
 export const DEFAULT_CHARACTERS: PixelCharacter[] = [
