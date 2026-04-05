@@ -6,6 +6,7 @@ import { Agent, Dialogue, Scene, DramaEvent } from '@/types/agent';
 import { ACHIEVEMENTS, Achievement } from '@/data/achievements';
 import { agents, getAgentById, getNPCs } from '@/config/agents';
 import { scenes, getSceneById } from '@/config/scenes';
+import { notificationService } from '@/lib/notificationService';
 
 // 当前存档版本
 const SAVE_VERSION = '1.0.0';
@@ -390,6 +391,11 @@ export const useGameStore = create<GameState>((set, get) => ({
     const newAchievements = { ...state.achievements, ...newState };
     set({ achievements: newAchievements, pendingAchievement: achievement });
     localStorage.setItem(ACHIEVEMENT_KEY, JSON.stringify(newAchievements));
+
+    // 发送浏览器通知
+    if (state.settings.notificationsEnabled) {
+      notificationService.notifyAchievement(achievement.title);
+    }
   },
 
   updateProgress: (type: string, value: number) => {
@@ -621,6 +627,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   addDialogue: (agentId: string, content: string) => {
+    const agent = getAgentById(agentId);
+    const agentName = agent?.name || 'Unknown';
     const newDialogue: Dialogue = {
       id: `d-${Date.now()}`,
       agentId,
@@ -631,6 +639,11 @@ export const useGameStore = create<GameState>((set, get) => ({
     set(state => ({
       dialogues: [...state.dialogues.slice(-50), newDialogue] // 保留最近50条
     }));
+    // 发送浏览器通知
+    const { settings } = get();
+    if (settings.notificationsEnabled && document.visibilityState === 'hidden') {
+      notificationService.notifyNewDialogue(agentName);
+    }
     // 检查对话相关成就
     get().checkAchievements();
     // 更新每日对话进度
@@ -670,6 +683,11 @@ export const useGameStore = create<GameState>((set, get) => ({
     set(state => ({
       dramaEvents: [...state.dramaEvents, event]
     }));
+    // 发送浏览器通知
+    const { settings } = get();
+    if (settings.notificationsEnabled) {
+      notificationService.notifyEvent(event.content);
+    }
     // 如果是NPC触发的事件，增加NPC触发计数
     if (event.trigger === 'npc') {
       const state = get();

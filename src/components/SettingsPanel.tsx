@@ -3,6 +3,7 @@
 import React from 'react';
 import { useGameStore } from '@/store/gameStore';
 import { audioEngine } from '@/game/engine/AudioEngine';
+import { notificationService } from '@/lib/notificationService';
 
 // ============ 类型定义 ============
 
@@ -247,6 +248,33 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
               checked={settings.notificationsEnabled}
               onChange={v => updateSettings({ notificationsEnabled: v })}
             />
+            <div className="mt-4 p-3 bg-yellow-50 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-medium">浏览器通知权限</div>
+                  <div className="text-xs text-gray-500">
+                    {typeof Notification !== 'undefined' && Notification.permission === 'granted'
+                      ? '已授权'
+                      : typeof Notification !== 'undefined' && Notification.permission === 'denied'
+                        ? '已拒绝，请在浏览器设置中开启'
+                        : '点击授权通知权限'}
+                  </div>
+                </div>
+                {typeof Notification !== 'undefined' && Notification.permission === 'default' && (
+                  <button
+                    onClick={async () => {
+                      const granted = await notificationService.requestPermission();
+                      if (granted) {
+                        updateSettings({ notificationsEnabled: true });
+                      }
+                    }}
+                    className="px-3 py-1 bg-yellow-500 text-white rounded-lg text-sm hover:bg-yellow-600 transition-colors"
+                  >
+                    授权
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
         </section>
 
