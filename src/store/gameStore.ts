@@ -187,6 +187,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   hasSave: () => {
+    if (typeof window === 'undefined') return false;
     return localStorage.getItem(SAVE_KEY) !== null;
   },
 
