@@ -18,6 +18,7 @@ import { AchievementPanel } from '@/components/AchievementPanel';
 import { StatsPanel } from '@/components/StatsPanel';
 import { DailyPanel } from '@/components/DailyPanel';
 import { SettingsPanel } from '@/components/SettingsPanel';
+import { ShareCard } from '@/components/ShareCard';
 import { ACHIEVEMENTS } from '@/data/achievements';
 import { useDramaStorySync } from '@/hooks/useDramaStorySync';
 import { agents } from '@/config/agents';
@@ -29,6 +30,7 @@ export default function Home() {
   const [showAchievementPanel, setShowAchievementPanel] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [shareData, setShareData] = useState<{ type: 'achievement' | 'stats' | 'daily' | 'nft'; data: any } | null>(null);
 
   const {
     tutorialCompleted,
@@ -42,6 +44,7 @@ export default function Home() {
     dailyState,
     checkDailyReset,
     dismissDailyPanel,
+    getStats,
   } = useGameStore();
 
   // 检查是否需要显示教程（首次访问）
@@ -219,6 +222,27 @@ export default function Home() {
             className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200"
           >
             📊 统计
+          </button>
+
+          {/* 分享按钮 */}
+          <button
+            onClick={() => {
+              const stats = getStats();
+              const hours = Math.floor(stats.totalPlayTime / 3600000);
+              const mins = Math.floor((stats.totalPlayTime % 3600000) / 60000);
+              setShareData({
+                type: 'stats',
+                data: {
+                  dialogues: stats.totalDialogues,
+                  events: stats.totalEvents,
+                  playTime: hours > 0 ? `${hours}h ${mins}m` : `${mins}m`,
+                  achievements: stats.achievementsUnlocked,
+                },
+              });
+            }}
+            className="px-3 py-1 text-sm bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200"
+          >
+            📤 分享
           </button>
 
           {/* 设置按钮 */}
@@ -508,22 +532,31 @@ export default function Home() {
 
       {/* 成就面板 */}
       {showAchievementPanel && (
-        <AchievementPanel onClose={() => setShowAchievementPanel(false)} />
+        <AchievementPanel onClose={() => setShowAchievementPanel(false)} onShare={(type, data) => setShareData({ type, data })} />
       )}
 
       {/* 统计面板 */}
       {showStats && (
-        <StatsPanel onClose={() => setShowStats(false)} />
+        <StatsPanel onClose={() => setShowStats(false)} onShare={(type, data) => setShareData({ type, data })} />
       )}
 
       {/* 每日挑战面板 */}
       {dailyState.showDailyPanel && (
-        <DailyPanel onClose={dismissDailyPanel} />
+        <DailyPanel onClose={dismissDailyPanel} onShare={(type, data) => setShareData({ type, data })} />
       )}
 
       {/* 设置面板 */}
       {showSettings && (
         <SettingsPanel onClose={() => setShowSettings(false)} />
+      )}
+
+      {/* 分享卡片 */}
+      {shareData && (
+        <ShareCard
+          type={shareData.type}
+          data={shareData.data}
+          onClose={() => setShareData(null)}
+        />
       )}
     </div>
   );

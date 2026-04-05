@@ -3,7 +3,7 @@
 import React from 'react';
 import { useGameStore } from '@/store/gameStore';
 
-export const StatsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+export const StatsPanel: React.FC<{ onClose: () => void; onShare?: (type: 'stats', data: any) => void }> = ({ onClose, onShare }) => {
   const { getStats } = useGameStore();
   const stats = getStats();
 
@@ -19,7 +19,26 @@ export const StatsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold">📊 游戏统计</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">✕</button>
+          <div className="flex items-center gap-2">
+            {onShare && (
+              <button
+                onClick={() => {
+                  const hours = Math.floor(stats.totalPlayTime / 3600000);
+                  const mins = Math.floor((stats.totalPlayTime % 3600000) / 60000);
+                  onShare('stats', {
+                    dialogues: stats.totalDialogues,
+                    events: stats.totalEvents,
+                    playTime: hours > 0 ? `${hours}h ${mins}m` : `${mins}m`,
+                    achievements: stats.achievementsUnlocked,
+                  });
+                }}
+                className="px-3 py-1 text-sm bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200"
+              >
+                📤 分享
+              </button>
+            )}
+            <button onClick={onClose} className="text-gray-500 hover:text-gray-700">✕</button>
+          </div>
         </div>
 
         {/* 对话统计 */}

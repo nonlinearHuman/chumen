@@ -13,9 +13,10 @@ type Filter = 'all' | Achievement['category'];
 
 interface AchievementPanelProps {
   onClose: () => void;
+  onShare?: (type: 'achievement', data: any) => void;
 }
 
-export const AchievementPanel: React.FC<AchievementPanelProps> = ({ onClose }) => {
+export const AchievementPanel: React.FC<AchievementPanelProps> = ({ onClose, onShare }) => {
   const [filter, setFilter] = useState<Filter>('all');
   const { achievements, dialogues, dramaEvents, nftProgress, playStartTime, cumulativePlayTime } = useGameStore();
 
@@ -82,12 +83,30 @@ export const AchievementPanel: React.FC<AchievementPanelProps> = ({ onClose }) =
             <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
               🏆 成就中心
             </h2>
-            <button
-              onClick={onClose}
-              className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 flex items-center justify-center transition-colors"
-            >
-              ✕
-            </button>
+            <div className="flex items-center gap-2">
+              {onShare && (
+                <button
+                  onClick={() => {
+                    // 分享所有已解锁成就汇总
+                    const unlockedAchievements = ACHIEVEMENTS.filter(a => achievements.unlocked.includes(a.id));
+                    onShare('achievement', {
+                      icon: '🏆',
+                      title: `已解锁 ${unlockedAchievements.length} 个成就`,
+                      description: unlockedAchievements.map(a => `${a.icon} ${a.title}`).join(' | ') || '暂无成就',
+                    });
+                  }}
+                  className="px-3 py-1 text-xs bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200"
+                >
+                  📤 分享全部
+                </button>
+              )}
+              <button
+                onClick={onClose}
+                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 flex items-center justify-center transition-colors"
+              >
+                ✕
+              </button>
+            </div>
           </div>
 
           {/* 总体统计 */}
@@ -157,10 +176,26 @@ export const AchievementPanel: React.FC<AchievementPanelProps> = ({ onClose }) =
               >
                 {/* 已解锁标签 */}
                 {unlocked && (
-                  <div className="absolute top-2 right-2">
+                  <div className="absolute top-2 right-2 flex items-center gap-1">
                     <span className="text-xs bg-amber-400 text-white rounded-full px-2 py-0.5 font-medium">
                       +{achievement.points}pt
                     </span>
+                    {onShare && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onShare('achievement', {
+                            icon: achievement.icon,
+                            title: achievement.title,
+                            description: achievement.description,
+                          });
+                        }}
+                        className="w-6 h-6 rounded-full bg-purple-100 hover:bg-purple-200 text-purple-600 flex items-center justify-center text-xs"
+                        title="分享成就"
+                      >
+                        📤
+                      </button>
+                    )}
                   </div>
                 )}
 

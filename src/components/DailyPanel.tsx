@@ -76,9 +76,10 @@ export const LOGIN_REWARDS: LoginReward[] = [
 
 interface DailyPanelProps {
   onClose: () => void;
+  onShare?: (type: 'daily', data: any) => void;
 }
 
-export function DailyPanel({ onClose }: DailyPanelProps) {
+export function DailyPanel({ onClose, onShare }: DailyPanelProps) {
   const {
     dailyState,
     claimChallengeReward,
@@ -169,12 +170,27 @@ export function DailyPanel({ onClose }: DailyPanelProps) {
                 {new Date().toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'long' })}
               </p>
             </div>
-            <button
-              onClick={onClose}
-              className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
-            >
-              ✕
-            </button>
+            <div className="flex items-center gap-2">
+              {onShare && dailyState.completedChallenges.length > 0 && (
+                <button
+                  onClick={() => {
+                    const completedTitles = DAILY_CHALLENGES
+                      .filter(c => dailyState.completedChallenges.includes(c.id))
+                      .map(c => c.title);
+                    onShare('daily', { challenges: completedTitles });
+                  }}
+                  className="px-3 py-1 text-sm bg-white/20 hover:bg-white/30 text-white rounded-lg"
+                >
+                  📤 分享
+                </button>
+              )}
+              <button
+                onClick={onClose}
+                className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+              >
+                ✕
+              </button>
+            </div>
           </div>
           
           {/* 连续登录徽章 */}
