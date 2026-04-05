@@ -41,6 +41,7 @@ export interface Character {
   lastFrameTime: number;
   emotion?: 'happy' | 'angry' | 'love' | 'neutral';
   lastEmotionTime: number;
+  lastFootstepTime: number;
 }
 
 export interface Dialogue {
@@ -59,61 +60,61 @@ export const createDefaultCharacters = (): Character[] => [
     id: 'marcus', name: 'Marcus', emoji: '🧑‍💻',
     x: 200, y: 300, targetX: 200, targetY: 300,
     direction: 'down', isMoving: false, color: '#4a90d9',
-    skills: ['谈判', '编程', '领导'], frameIndex: 0, lastFrameTime: 0, lastEmotionTime: 0
+    skills: ['谈判', '编程', '领导'], frameIndex: 0, lastFrameTime: 0, lastEmotionTime: 0, lastFootstepTime: 0
   },
   {
     id: 'sophia', name: 'Sophia', emoji: '👩‍⚖️',
     x: 400, y: 300, targetX: 400, targetY: 300,
     direction: 'down_left', isMoving: false, color: '#9b59b6',
-    skills: ['法律', '谈判', '社交'], frameIndex: 0, lastFrameTime: 0, lastEmotionTime: 0
+    skills: ['法律', '谈判', '社交'], frameIndex: 0, lastFrameTime: 0, lastEmotionTime: 0, lastFootstepTime: 0
   },
   {
     id: 'james', name: 'James', emoji: '👨‍⚕️',
     x: 600, y: 300, targetX: 600, targetY: 300,
     direction: 'down_right', isMoving: false, color: '#27ae60',
-    skills: ['医疗', '科研', '同理心'], frameIndex: 0, lastFrameTime: 0, lastEmotionTime: 0
+    skills: ['医疗', '科研', '同理心'], frameIndex: 0, lastFrameTime: 0, lastEmotionTime: 0, lastFootstepTime: 0
   },
   {
     id: 'emily', name: 'Emily', emoji: '📰',
     x: 200, y: 450, targetX: 200, targetY: 450,
     direction: 'up', isMoving: false, color: '#e74c3c',
-    skills: ['调查', '写作', '社交'], frameIndex: 0, lastFrameTime: 0, lastEmotionTime: 0
+    skills: ['调查', '写作', '社交'], frameIndex: 0, lastFrameTime: 0, lastEmotionTime: 0, lastFootstepTime: 0
   },
   {
     id: 'david', name: 'David', emoji: '🕴️',
     x: 500, y: 450, targetX: 500, targetY: 450,
     direction: 'up_right', isMoving: false, color: '#2c3e50',
-    skills: ['投资', '博弈', '布局'], frameIndex: 0, lastFrameTime: 0, lastEmotionTime: 0
+    skills: ['投资', '博弈', '布局'], frameIndex: 0, lastFrameTime: 0, lastEmotionTime: 0, lastFootstepTime: 0
   },
   {
     id: 'lisa', name: 'Lisa', emoji: '📱',
     x: 350, y: 200, targetX: 350, targetY: 200,
     direction: 'down_left', isMoving: false, color: '#e91e8c',
-    skills: ['表演', '社交', '运营'], frameIndex: 0, lastFrameTime: 0, lastEmotionTime: 0
+    skills: ['表演', '社交', '运营'], frameIndex: 0, lastFrameTime: 0, lastEmotionTime: 0, lastFootstepTime: 0
   },
   {
     id: 'robert', name: 'Robert', emoji: '👮',
     x: 650, y: 200, targetX: 650, targetY: 200,
     direction: 'down', isMoving: false, color: '#1a5276',
-    skills: ['侦查', '审讯', '推理'], frameIndex: 0, lastFrameTime: 0, lastEmotionTime: 0
+    skills: ['侦查', '审讯', '推理'], frameIndex: 0, lastFrameTime: 0, lastEmotionTime: 0, lastFootstepTime: 0
   },
   {
     id: 'zhangyi', name: '张姨', emoji: '👵',
     x: 100, y: 350, targetX: 100, targetY: 350,
     direction: 'right', isMoving: false, color: '#d35400',
-    skills: ['八卦', '社交', '撮合'], frameIndex: 0, lastFrameTime: 0, lastEmotionTime: 0
+    skills: ['八卦', '社交', '撮合'], frameIndex: 0, lastFrameTime: 0, lastEmotionTime: 0, lastFootstepTime: 0
   },
   {
     id: 'xiaowang', name: '小王', emoji: '🎓',
     x: 450, y: 450, targetX: 450, targetY: 450,
     direction: 'up_left', isMoving: false, color: '#16a085',
-    skills: ['写作', '调查', '学习'], frameIndex: 0, lastFrameTime: 0, lastEmotionTime: 0
+    skills: ['写作', '调查', '学习'], frameIndex: 0, lastFrameTime: 0, lastEmotionTime: 0, lastFootstepTime: 0
   },
   {
     id: 'laoli', name: '老李', emoji: '🚕',
     x: 600, y: 450, targetX: 600, targetY: 450,
     direction: 'up', isMoving: false, color: '#7f8c8d',
-    skills: ['驾驶', '聊天', '情报'], frameIndex: 0, lastFrameTime: 0, lastEmotionTime: 0
+    skills: ['驾驶', '聊天', '情报'], frameIndex: 0, lastFrameTime: 0, lastEmotionTime: 0, lastFootstepTime: 0
   },
 ];
 
@@ -247,6 +248,7 @@ export const useGameEngine = () => {
         targetX: 150 + (i % 5) * 130,
         targetY: 250 + Math.floor(i / 5) * 150,
         frameIndex: 0,
+        lastFootstepTime: 0,
       })));
 
       // 更新区域粒子发射器
@@ -449,7 +451,7 @@ export const useGameEngine = () => {
       });
     }
 
-    // 更新角色位置 + 帧动画
+    // 更新角色位置 + 帧动画 + 脚步声
     setCharacters(prev => prev.map(char => {
       const speed = 1.5;
       const dx = char.targetX - char.x;
@@ -465,8 +467,15 @@ export const useGameEngine = () => {
         newLastFrameTime = now;
       }
 
+      // 脚步声：每 300ms 播放一次（避免每帧都播）
+      let newLastFootstepTime = char.lastFootstepTime;
+      if (distance >= speed && now - char.lastFootstepTime > 300) {
+        audioEngine.playSound('footstep');
+        newLastFootstepTime = now;
+      }
+
       if (distance < speed) {
-        return { ...char, x: char.targetX, y: char.targetY, isMoving: false, frameIndex: 0, lastFrameTime: newLastFrameTime };
+        return { ...char, x: char.targetX, y: char.targetY, isMoving: false, frameIndex: 0, lastFrameTime: newLastFrameTime, lastFootstepTime: newLastFootstepTime };
       }
 
       return {
@@ -475,6 +484,7 @@ export const useGameEngine = () => {
         y: char.y + (dy / distance) * speed,
         frameIndex: newFrameIndex,
         lastFrameTime: newLastFrameTime,
+        lastFootstepTime: newLastFootstepTime,
       };
     }));
 

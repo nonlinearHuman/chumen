@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { TimeOfDay, TimePhase } from '../game/engine/DayNightCycle';
 import { Weather, WeatherType } from '../game/engine/WeatherSystem';
+import { audioEngine } from '../game/engine/AudioEngine';
 
 interface WorldControlsProps {
   currentTime: TimeOfDay | null;
@@ -41,6 +42,55 @@ export default function WorldControls({
   onAutoModeChange,
 }: WorldControlsProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  const [bgmVolume, setBgmVolume] = useState(30); // 0-100
+  const [sfxVolume, setSfxVolume] = useState(40); // 0-100
+  const [audioInitialized, setAudioInitialized] = useState(false);
+
+  // 初始化音频上下文
+  const initAudio = async () => {
+    await audioEngine.init();
+    setAudioInitialized(true);
+  };
+
+  // 静音切换
+  const toggleMute = () => {
+    if (!audioInitialized) {
+      initAudio();
+      setIsMuted(false);
+      return;
+    }
+    if (isMuted) {
+      audioEngine.unmute();
+      audioEngine.setBGMVolume(bgmVolume / 100);
+      audioEngine.setSFXVolume(sfxVolume / 100);
+    } else {
+      audioEngine.mute();
+    }
+    setIsMuted(!isMuted);
+  };
+
+  // BGM 音量变化
+  const handleBgmVolume = (v: number) => {
+    setBgmVolume(v);
+    if (audioInitialized && !isMuted) {
+      audioEngine.setBGMVolume(v / 100);
+    }
+  };
+
+  // SFX 音量变化
+  const handleSfxVolume = (v: number) => {
+    setSfxVolume(v);
+    if (audioInitialized && !isMuted) {
+      audioEngine.setSFXVolume(v / 100);
+    }
+  };
+
+  // 测试音效
+  const testSfx = () => {
+    if (!audioInitialized) initAudio();
+    setTimeout(() => audioEngine.playSound('ui_click'), 50);
+  };
 
   if (!currentTime || !currentWeather) return null;
 
@@ -172,6 +222,82 @@ export default function WorldControls({
                   {option.name}
                 </button>
               ))}
+            </div>
+          </div>
+
+          {/* 音效控制 */}
+          <div className="mt-4 pt-3 border-t border-white/10">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-white/60 text-xs">🔊 音效控制</span>
+              <button
+                onClick={testSfx}
+                className="text-white/40 hover:text-white text-xs transition-colors"
+              >
+                测试
+              </button>
+            </div>
+
+            {/* 总静音开关 */}
+            <div className="flex items-center justify-between mb-3 bg-white/5 rounded-lg p-2">
+              <span className="text-white/70 text-xs">音效 {isMuted ? '🔇 静音' : '🔉 开启'}</span>
+              <button
+                onClick={toggleMute}
+                className={`relative w-12 h-6 rounded-full transition-colors ${
+                  isMuted ? 'bg-red-500/60' : 'bg-green-500/60'
+                }`}
+              >
+                <div
+                  className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
+                    isMuted ? 'left-1' : 'left-7'
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* BGM 音量 */}
+            <div className="mb-3">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-white/50 text-xs">🎵 BGM 音量</span>
+                <span className="text-white/40 text-xs font-mono">{bgmVolume}%</span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={bgmVolume}
+                onChange={(e) => handleBgmVolume(parseInt(e.target.value))}
+                className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer
+                  [&::-webkit-slider-thumb]:appearance-none
+                  [&::-webkit-slider-thumb]:w-4
+                  [&::-webkit-slider-thumb]:h-4
+                  [&::-webkit-slider-thumb]:rounded-full
+                  [&::-webkit-slider-thumb]:bg-pink-400
+                  [&::-webkit-slider-thumb]:shadow-lg
+                  [&::-webkit-slider-thumb]:cursor-pointer"
+              />
+            </div>
+
+            {/* SFX 音量 */}
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-white/50 text-xs">🔔 SFX 音量</span>
+                <span className="text-white/40 text-xs font-mono">{sfxVolume}%</span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={sfxVolume}
+                onChange={(e) => handleSfxVolume(parseInt(e.target.value))}
+                className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer
+                  [&::-webkit-slider-thumb]:appearance-none
+                  [&::-webkit-slider-thumb]:w-4
+                  [&::-webkit-slider-thumb]:h-4
+                  [&::-webkit-slider-thumb]:rounded-full
+                  [&::-webkit-slider-thumb]:bg-cyan-400
+                  [&::-webkit-slider-thumb]:shadow-lg
+                  [&::-webkit-slider-thumb]:cursor-pointer"
+              />
             </div>
           </div>
 

@@ -9,7 +9,15 @@ export type SoundType =
   | 'ui_click'          // UI点击
   | 'ambient'           // 环境音
   | 'footstep'          // 脚步声
-  | 'notification';     // 通知提示
+  | 'notification'      // 通知提示
+  | 'npc_trigger'       // NPC触发（张姨八卦、小王打探）
+  | 'emotion_change'    // 情绪变化
+  | 'story_event'       // 剧情事件触发
+  | 'legendary_appear'  // 传奇角色出现
+  | 'item_collect'      // 收集物品
+  | 'error'             // 错误提示
+  | 'success'           // 成功提示
+  | 'rare_appear';      // 稀有角色出现
 
 interface SceneAudio {
   ambientFreq: number;      // 环境音频率 Hz
@@ -18,47 +26,66 @@ interface SceneAudio {
   bgmUrl?: string;          // 背景音乐URL（可选）
 }
 
+// 免费公版BGM（Pixabay）- 可直接使用
+const FREE_BGM: Record<string, string | undefined> = {
+  coffee_shop: 'https://cdn.pixabay.com/audio/2022/03/15/audio_1ec46ab521.mp3', // 咖啡馆爵士
+  hospital:    'https://cdn.pixabay.com/audio/2022/10/25/audio_a5167ab41b.mp3', // 医疗环境
+  office:      'https://cdn.pixabay.com/audio/2022/05/27/audio_1808fbf07a.mp3', // 办公氛围
+  street:      'https://cdn.pixabay.com/audio/2022/08/31/audio_419263fc32.mp3', // 城市街道
+  court:       'https://cdn.pixabay.com/audio/2022/03/10/audio_6c41ba6409.mp3', // 庄严音乐
+  park:        'https://cdn.pixabay.com/audio/2022/03/24/audio_944e087a4c.mp3', // 自然环境
+  media_office: 'https://cdn.pixabay.com/audio/2022/03/15/audio_1ec46ab521.mp3', // 同咖啡馆
+  police_station: 'https://cdn.pixabay.com/audio/2022/03/10/audio_6c41ba6409.mp3', // 庄严低沉
+};
+
 const SCENE_AUDIO: Record<string, SceneAudio> = {
   coffee_shop: {
     ambientFreq: 220,
     ambientType: 'sine',
     ambientVolume: 0.03,
-    bgmUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+    bgmUrl: FREE_BGM.coffee_shop,
   },
   hospital: {
     ambientFreq: 110,
     ambientType: 'sine',
     ambientVolume: 0.02,
+    bgmUrl: FREE_BGM.hospital,
   },
   office: {
     ambientFreq: 180,
     ambientType: 'triangle',
     ambientVolume: 0.025,
+    bgmUrl: FREE_BGM.office,
   },
   street: {
     ambientFreq: 130,
     ambientType: 'sawtooth',
     ambientVolume: 0.02,
+    bgmUrl: FREE_BGM.street,
   },
   media_office: {
     ambientFreq: 300,
     ambientType: 'square',
     ambientVolume: 0.015,
+    bgmUrl: FREE_BGM.media_office,
   },
   court: {
     ambientFreq: 80,
     ambientType: 'sine',
     ambientVolume: 0.03,
+    bgmUrl: FREE_BGM.court,
   },
   police_station: {
     ambientFreq: 60,
     ambientType: 'sawtooth',
     ambientVolume: 0.02,
+    bgmUrl: FREE_BGM.police_station,
   },
   park: {
     ambientFreq: 400,
     ambientType: 'sine',
     ambientVolume: 0.02,
+    bgmUrl: FREE_BGM.park,
   },
 };
 
@@ -142,6 +169,63 @@ class AudioEngine {
       case 'notification':
         this.playTone(880, 'sine', 0.1, 0.15, now);
         this.playTone(1100, 'sine', 0.08, 0.12, now + 0.12);
+        break;
+
+      case 'npc_trigger':
+        // NPC触发：短促颤音 + 上扬 - 八卦/打探的感觉
+        this.playTone(400, 'triangle', 0.06, 0.18, now);
+        this.playTone(500, 'triangle', 0.05, 0.15, now + 0.04);
+        this.playTone(600, 'triangle', 0.04, 0.12, now + 0.08);
+        break;
+
+      case 'emotion_change':
+        // 情绪变化：柔和的滑音
+        this.playTone(300, 'sine', 0.1, 0.12, now);
+        this.playTone(450, 'sine', 0.08, 0.10, now + 0.06);
+        break;
+
+      case 'story_event':
+        // 剧情事件：戏剧性的三连音
+        this.playTone(250, 'sawtooth', 0.12, 0.15, now);
+        this.playTone(375, 'sawtooth', 0.10, 0.12, now + 0.1);
+        this.playTone(500, 'sawtooth', 0.08, 0.10, now + 0.2);
+        break;
+
+      case 'legendary_appear':
+        // 传奇角色出现：金色庄严上行音阶
+        this.playTone(330, 'triangle', 0.12, 0.20, now);
+        this.playTone(440, 'triangle', 0.10, 0.18, now + 0.12);
+        this.playTone(550, 'triangle', 0.10, 0.16, now + 0.24);
+        this.playTone(660, 'triangle', 0.08, 0.14, now + 0.36);
+        this.playTone(880, 'triangle', 0.06, 0.12, now + 0.48);
+        break;
+
+      case 'item_collect':
+        // 收集物品：清脆叮咚音
+        this.playTone(880, 'sine', 0.06, 0.18, now);
+        this.playTone(1100, 'sine', 0.05, 0.15, now + 0.06);
+        this.playTone(1320, 'sine', 0.04, 0.12, now + 0.12);
+        break;
+
+      case 'error':
+        // 错误提示：低沉的下降音
+        this.playTone(200, 'sawtooth', 0.1, 0.15, now);
+        this.playTone(150, 'sawtooth', 0.08, 0.12, now + 0.08);
+        break;
+
+      case 'success':
+        // 成功提示：欢快的上行三连
+        this.playTone(523, 'sine', 0.08, 0.18, now);
+        this.playTone(659, 'sine', 0.07, 0.16, now + 0.07);
+        this.playTone(784, 'sine', 0.06, 0.14, now + 0.14);
+        break;
+
+      case 'rare_appear':
+        // 稀有角色出现：神秘的下降 + 上升
+        this.playTone(600, 'sine', 0.1, 0.15, now);
+        this.playTone(450, 'sine', 0.08, 0.12, now + 0.08);
+        this.playTone(600, 'sine', 0.06, 0.10, now + 0.16);
+        this.playTone(800, 'sine', 0.05, 0.08, now + 0.24);
         break;
     }
   }
