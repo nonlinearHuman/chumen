@@ -20,6 +20,7 @@ import { DailyPanel } from '@/components/DailyPanel';
 import { SettingsPanel } from '@/components/SettingsPanel';
 import { RelationshipGraph } from '@/components/RelationshipGraph';
 import { ShareCard } from '@/components/ShareCard';
+import { GameTimeline } from '@/components/GameTimeline';
 import { ACHIEVEMENTS } from '@/data/achievements';
 import { useDramaStorySync } from '@/hooks/useDramaStorySync';
 import { agents } from '@/config/agents';
@@ -32,6 +33,7 @@ export default function Home() {
   const [showStats, setShowStats] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showRelationshipGraph, setShowRelationshipGraph] = useState(false);
+  const [showTimeline, setShowTimeline] = useState(false);
   const [shareData, setShareData] = useState<{ type: 'achievement' | 'stats' | 'daily' | 'nft'; data: any } | null>(null);
 
   const {
@@ -232,6 +234,14 @@ export default function Home() {
             className="px-3 py-1 text-sm bg-pink-100 text-pink-700 rounded-lg hover:bg-pink-200"
           >
             🔗 关系图谱
+          </button>
+
+          {/* 日志按钮 */}
+          <button
+            onClick={() => setShowTimeline(true)}
+            className="px-3 py-1 text-sm bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200"
+          >
+            📜 日志
           </button>
 
           {/* 分享按钮 */}
@@ -563,6 +573,21 @@ export default function Home() {
             <button
               onClick={() => setShowRelationshipGraph(false)}
               className="mt-4 w-full px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
+            >
+              关闭
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 时间线弹窗 */}
+      {showTimeline && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl max-w-lg w-full mx-4 max-h-[80vh] overflow-hidden">
+            <GameTimeline />
+            <button
+              onClick={() => setShowTimeline(false)}
+              className="w-full p-3 bg-gray-100 hover:bg-gray-200"
             >
               关闭
             </button>
