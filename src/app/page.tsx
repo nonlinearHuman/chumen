@@ -18,6 +18,7 @@ import { AchievementPanel } from '@/components/AchievementPanel';
 import { StatsPanel } from '@/components/StatsPanel';
 import { DailyPanel } from '@/components/DailyPanel';
 import { SettingsPanel } from '@/components/SettingsPanel';
+import { RelationshipGraph } from '@/components/RelationshipGraph';
 import { ShareCard } from '@/components/ShareCard';
 import { ACHIEVEMENTS } from '@/data/achievements';
 import { useDramaStorySync } from '@/hooks/useDramaStorySync';
@@ -30,6 +31,7 @@ export default function Home() {
   const [showAchievementPanel, setShowAchievementPanel] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showRelationshipGraph, setShowRelationshipGraph] = useState(false);
   const [shareData, setShareData] = useState<{ type: 'achievement' | 'stats' | 'daily' | 'nft'; data: any } | null>(null);
 
   const {
@@ -222,6 +224,14 @@ export default function Home() {
             className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200"
           >
             📊 统计
+          </button>
+
+          {/* 关系图谱按钮 */}
+          <button
+            onClick={() => setShowRelationshipGraph(true)}
+            className="px-3 py-1 text-sm bg-pink-100 text-pink-700 rounded-lg hover:bg-pink-200"
+          >
+            🔗 关系图谱
           </button>
 
           {/* 分享按钮 */}
@@ -543,6 +553,21 @@ export default function Home() {
       {/* 每日挑战面板 */}
       {dailyState.showDailyPanel && (
         <DailyPanel onClose={dismissDailyPanel} onShare={(type, data) => setShareData({ type, data })} />
+      )}
+
+      {/* 关系图谱弹窗 */}
+      {showRelationshipGraph && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 max-w-2xl w-full mx-4">
+            <RelationshipGraph />
+            <button
+              onClick={() => setShowRelationshipGraph(false)}
+              className="mt-4 w-full px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
+            >
+              关闭
+            </button>
+          </div>
+        </div>
       )}
 
       {/* 设置面板 */}

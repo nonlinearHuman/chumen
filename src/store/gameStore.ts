@@ -13,6 +13,66 @@ const SAVE_KEY = 'chumen_save';
 const TUTORIAL_KEY = 'chumen_tutorial_completed';
 const ACHIEVEMENT_KEY = 'chumen_achievements';
 const SETTINGS_KEY = 'chumen_settings';
+const RELATIONSHIP_KEY = 'chumen_relationships';
+
+// 关系数据结构
+export interface Relationship {
+  agentId: string;
+  targetId: string;
+  level: number; // -100 to 100
+  lastEvent: string;
+}
+
+// 初始化角色关系（基于 agents.ts 中的 relationships 配置）
+const initRelationships = (): Relationship[] => {
+  const rels: Relationship[] = [];
+  const coreAgents = agents.filter((a) => !a.isNPC);
+
+  for (const agent of coreAgents) {
+    if (agent.relationships) {
+      for (const [targetId, _] of Object.entries(agent.relationships)) {
+        const target = agents.find((a) => a.id === targetId);
+        if (target && !target.isNPC) {
+          // 检查是否已存在反向关系
+          const exists = rels.find(
+            (r) =>
+              (r.agentId === agent.id && r.targetId === targetId) ||
+              (r.agentId === targetId && r.targetId === agent.id)
+          );
+          if (!exists) {
+            rels.push({
+              agentId: agent.id,
+              targetId: targetId,
+              level: 0, // 初始为中立
+              lastEvent: '',
+            });
+          }
+        }
+      }
+    }
+  }
+  return rels;
+};
+
+// 加载关系数据
+const loadRelationships = (): Relationship[] => {
+  if (typeof window === 'undefined') return initRelationships();
+  try {
+    const saved = localStorage.getItem(RELATIONSHIP_KEY);
+    if (saved) {
+      return JSON.parse(saved);
+    }
+  } catch (e) {}
+  return initRelationships();
+};
+
+// 保存关系数据
+const saveRelationships = (relationships: Relationship[]) => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(RELATIONSHIP_KEY, JSON.stringify(relationships));
+  } catch (e) {}
+};
 
 // ============ 游戏设置 ============
 
@@ -234,6 +294,10 @@ interface GameState {
   claimLoginReward: (day: number) => void;
   updateDailyProgress: (type: 'dialogue' | 'event' | 'explore' | 'social') => void;
 
+  // 角色关系相关
+  relationships: Relationship[];
+  updateRelationship: (from: string, to: string, delta: number, event?: string) => void;
+
   // Actions
   setScene: (sceneId: string) => void;
   addDialogue: (agentId: string, content: string) => void;
@@ -270,6 +334,9 @@ export const useGameStore = create<GameState>((set, get) => ({
     mintedAgents: [],
     unlockedStories: [],
   },
+
+  // 角色关系
+  relationships: loadRelationships(),
 
   // 游戏设置
   settings: loadSettings(),
@@ -622,6 +689,23 @@ export const useGameStore = create<GameState>((set, get) => ({
     }
     // 检查事件相关成就
     get().checkAchievements();
+  },
+
+  // 角色关系更新
+  updateRelationship: (from: string, to: string, delta: number, event = '') => {
+    const state = get();
+    const newRelationships = state.relationships.map((r) => {
+      if (
+        (r.agentId === from && r.targetId === to) ||
+        (r.agentId === to && r.targetId === from)
+      ) {
+        const newLevel = Math.max(-100, Math.min(100, r.level + delta));
+        return { ...r, level: newLevel, lastEvent: event };
+      }
+      return r;
+    });
+    set({ relationships: newRelationships });
+    saveRelationships(newRelationships);
   },
 
   // 存档方法
