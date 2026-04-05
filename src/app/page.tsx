@@ -12,12 +12,38 @@ import { DialogueBubble } from '@/components/DialogueBubble';
 import { HighlightDialogue, isHighlightDialogue } from '@/components/HighlightDialogue';
 import { NFTMarket } from '@/components/NFTMarket';
 import { PixelWorld } from '@/game/components/PixelWorld';
+import { TutorialOverlay } from '@/components/TutorialOverlay';
 import { useDramaStorySync } from '@/hooks/useDramaStorySync';
 import { agents } from '@/config/agents';
 import { scenes } from '@/config/scenes';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<'chat' | 'pixel' | 'nft'>('chat');
+  const [showTutorialOverlay, setShowTutorialOverlay] = useState(false);
+
+  const {
+    tutorialCompleted,
+    hideTutorial,
+    showTutorial,
+  } = useGameStore();
+
+  // 检查是否需要显示教程（首次访问）
+  useEffect(() => {
+    const tutorialDone = localStorage.getItem('chumen_tutorial_completed');
+    if (tutorialDone !== 'true') {
+      setShowTutorialOverlay(true);
+    }
+  }, []);
+
+  const handleTutorialComplete = useCallback(() => {
+    hideTutorial();
+    setShowTutorialOverlay(false);
+  }, [hideTutorial]);
+
+  const handleTutorialSkip = useCallback(() => {
+    hideTutorial();
+    setShowTutorialOverlay(false);
+  }, [hideTutorial]);
 
   // 剧情 → NFT故事线自动同步
   useDramaStorySync();
@@ -384,6 +410,14 @@ export default function Home() {
         <main className="max-w-4xl mx-auto px-4 py-6">
           <NFTMarket />
         </main>
+      )}
+
+      {/* 教程浮层 */}
+      {showTutorialOverlay && (
+        <TutorialOverlay
+          onComplete={handleTutorialComplete}
+          onSkip={handleTutorialSkip}
+        />
       )}
     </div>
   );

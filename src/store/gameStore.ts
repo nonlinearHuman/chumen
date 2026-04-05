@@ -9,6 +9,7 @@ import { scenes, getSceneById } from '@/config/scenes';
 // 当前存档版本
 const SAVE_VERSION = '1.0.0';
 const SAVE_KEY = 'chumen_save';
+const TUTORIAL_KEY = 'chumen_tutorial_completed';
 
 // 存档数据结构
 export interface SaveData {
@@ -48,6 +49,11 @@ interface GameState {
     unlockedStories: string[];
   };
   
+  // 教程相关
+  tutorialCompleted: boolean;
+  showTutorial: () => void;
+  hideTutorial: () => void;
+  
   // Actions
   setScene: (sceneId: string) => void;
   addDialogue: (agentId: string, content: string) => void;
@@ -77,6 +83,16 @@ export const useGameStore = create<GameState>((set, get) => ({
   nftProgress: {
     mintedAgents: [],
     unlockedStories: [],
+  },
+
+  // 教程相关 - 初始值由 page.tsx 的 useEffect 设置
+  tutorialCompleted: false,
+  showTutorial: () => {
+    useGameStore.setState({ tutorialCompleted: false });
+  },
+  hideTutorial: () => {
+    localStorage.setItem(TUTORIAL_KEY, 'true');
+    useGameStore.setState({ tutorialCompleted: true });
   },
 
   // Actions
