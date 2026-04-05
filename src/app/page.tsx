@@ -16,6 +16,7 @@ import { TutorialOverlay } from '@/components/TutorialOverlay';
 import { AchievementPopup } from '@/components/AchievementPopup';
 import { AchievementPanel } from '@/components/AchievementPanel';
 import { StatsPanel } from '@/components/StatsPanel';
+import { DailyPanel } from '@/components/DailyPanel';
 import { ACHIEVEMENTS } from '@/data/achievements';
 import { useDramaStorySync } from '@/hooks/useDramaStorySync';
 import { agents } from '@/config/agents';
@@ -36,6 +37,9 @@ export default function Home() {
     dismissPendingAchievement,
     checkAchievements,
     nftProgress,
+    dailyState,
+    checkDailyReset,
+    dismissDailyPanel,
   } = useGameStore();
 
   // 检查是否需要显示教程（首次访问）
@@ -44,6 +48,8 @@ export default function Home() {
     if (tutorialDone !== 'true') {
       setShowTutorialOverlay(true);
     }
+    // 检查每日重置
+    checkDailyReset();
   }, []);
 
   const handleTutorialComplete = useCallback(() => {
@@ -188,6 +194,21 @@ export default function Home() {
             <span className="text-xs text-amber-500/70 hidden sm:inline">
               ({achievements.unlocked.length}/{ACHIEVEMENTS.length})
             </span>
+          </button>
+
+          {/* 每日挑战按钮 */}
+          <button
+            onClick={() => checkDailyReset()}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors"
+            title="每日挑战"
+          >
+            <span className="text-sm">🎯</span>
+            <span className="text-sm font-bold text-purple-600">
+              {dailyState.completedChallenges.length}/4
+            </span>
+            {dailyState.showDailyPanel && (
+              <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+            )}
           </button>
 
           {/* 统计按钮 */}
@@ -483,6 +504,11 @@ export default function Home() {
       {/* 统计面板 */}
       {showStats && (
         <StatsPanel onClose={() => setShowStats(false)} />
+      )}
+
+      {/* 每日挑战面板 */}
+      {dailyState.showDailyPanel && (
+        <DailyPanel onClose={dismissDailyPanel} />
       )}
     </div>
   );

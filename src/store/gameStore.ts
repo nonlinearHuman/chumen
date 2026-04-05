@@ -22,6 +22,74 @@ export interface AchievementState {
   npcTriggerCount: number; // NPC触发次数
 }
 
+// 每日挑战状态
+export interface DailyState {
+  lastLoginDate: string; // 'YYYY-MM-DD' 格式
+  loginStreak: number; // 连续登录天数
+  todayProgress: {
+    dialogueCount: number;
+    eventCount: number;
+    scenesVisited: number;
+    npcTriggerCount: number;
+  };
+  completedChallenges: string[]; // 今日完成的挑战ID
+  claimedRewards: string[]; // 已领取的奖励ID (包括 login_X 和 challenge ID)
+  showDailyPanel: boolean; // 是否显示每日面板
+}
+
+const DAILY_KEY = 'chumen_daily';
+
+// 检查是否是昨天
+const isYesterday = (dateStr: string | null): boolean => {
+  if (!dateStr) return false;
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  return dateStr === yesterday.toISOString().split('T')[0];
+};
+
+// 获取今天的日期字符串
+const getTodayStr = (): string => {
+  return new Date().toISOString().split('T')[0];
+};
+
+// 加载每日状态
+const loadDailyState = (): DailyState => {
+  if (typeof window === 'undefined') {
+    return {
+      lastLoginDate: '',
+      loginStreak: 0,
+      todayProgress: { dialogueCount: 0, eventCount: 0, scenesVisited: 0, npcTriggerCount: 0 },
+      completedChallenges: [],
+      claimedRewards: [],
+      showDailyPanel: false,
+    };
+  }
+  try {
+    const saved = localStorage.getItem(DAILY_KEY);
+    if (saved) {
+      return JSON.parse(saved);
+    }
+  } catch (e) {}
+  return {
+    lastLoginDate: '',
+    loginStreak: 0,
+    todayProgress: { dialogueCount: 0, eventCount: 0, scenesVisited: 0, npcTriggerCount: 0 },
+    completedChallenges: [],
+    claimedRewards: [],
+    showDailyPanel: false,
+  };
+};
+
+// 保存每日状态
+const saveDailyState = (state: DailyState) => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(DAILY_KEY, JSON.stringify(state));
+  } catch (e) {
+    console.error('保存每日状态失败:', e);
+  }
+};
+
 // 游戏统计数据接口
 export interface GameStats {
   // 对话统计
@@ -102,6 +170,14 @@ interface GameState {
   updateProgress: (type: string, value: number) => void;
   checkAchievements: () => void;
   dismissPendingAchievement: () => void;
+
+  // 每日挑战相关
+  dailyState: DailyState;
+  checkDailyReset: () => void;
+  dismissDailyPanel: () => void;
+  claimChallengeReward: (challengeId: string) => void;
+  claimLoginReward: (day: number) => void;
+  updateDailyProgress: (type: 'dialogue' | 'event' | 'explore' | 'social') => void;
 
   // Actions
   setScene: (sceneId: string) => void;
@@ -263,6 +339,133 @@ export const useGameStore = create<GameState>((set, get) => ({
     set({ pendingAchievement: null });
   },
 
+  // 每日挑战相关 - 初始状态
+  dailyState: (() => {
+    const state = loadDailyState();
+    // 检查是否需要重置
+    const today = getTodayStr();
+    if (state.lastLoginDate !== today) {
+      if (isYesterday(state.lastLoginDate)) {
+        state.loginStreak = state.loginStreak + 1;
+      } else {
+        state.loginStreak = 1;
+      }
+      state.lastLoginDate = today;
+      state.todayProgress = { dialogueCount: 0, eventCount: 0, scenesVisited: 0, npcTriggerCount: 0 };
+      state.completedChallenges = [];
+      state.claimedRewards = [];
+      // 如果是新的一天，显示面板
+      state.showDailyPanel = true;
+      saveDailyState(state);
+    }
+    return state;
+  })(),
+
+  checkDailyReset: () => {
+    const state = get();
+    const today = getTodayStr();
+    if (state.dailyState.lastLoginDate !== today) {
+      // 日期变化，执行重置逻辑
+      const newStreak = isYesterday(state.dailyState.lastLoginDate) 
+        ? state.dailyState.loginStreak + 1 
+        : 1;
+      const newState: DailyState = {
+        ...state.dailyState,
+        lastLoginDate: today,
+        loginStreak: newStreak,
+        todayProgress: { dialogueCount: 0, eventCount: 0, scenesVisited: 0, npcTriggerCount: 0 },
+        completedChallenges: [],
+        claimedRewards: [],
+        showDailyPanel: true,
+      };
+      set({ dailyState: newState });
+      saveDailyState(newState);
+    }
+  },
+
+  dismissDailyPanel: () => {
+    const state = get();
+    const newState = { ...state.dailyState, showDailyPanel: false };
+    set({ dailyState: newState });
+    saveDailyState(newState);
+  },
+
+  claimChallengeReward: (challengeId: string) => {
+    const state = get();
+    if (state.dailyState.claimedRewards.includes(challengeId)) return;
+    if (!state.dailyState.completedChallenges.includes(challengeId)) return;
+
+    const newState = {
+      ...state.dailyState,
+      claimedRewards: [...state.dailyState.claimedRewards, challengeId],
+    };
+    set({ dailyState: newState });
+    saveDailyState(newState);
+  },
+
+  claimLoginReward: (day: number) => {
+    const state = get();
+    const rewardId = `login_${day}`;
+    if (state.dailyState.claimedRewards.includes(rewardId)) return;
+    if (state.dailyState.loginStreak < day) return;
+
+    const newState = {
+      ...state.dailyState,
+      claimedRewards: [...state.dailyState.claimedRewards, rewardId],
+    };
+    set({ dailyState: newState });
+    saveDailyState(newState);
+  },
+
+  updateDailyProgress: (type: 'dialogue' | 'event' | 'explore' | 'social') => {
+    const state = get();
+    const today = getTodayStr();
+    
+    // 如果日期变了，先重置
+    if (state.dailyState.lastLoginDate !== today) {
+      get().checkDailyReset();
+      return;
+    }
+
+    let newProgress = { ...state.dailyState.todayProgress };
+    let completedChallenges = [...state.dailyState.completedChallenges];
+
+    switch (type) {
+      case 'dialogue':
+        newProgress.dialogueCount++;
+        if (newProgress.dialogueCount >= 10 && !completedChallenges.includes('daily_dialogue_10')) {
+          completedChallenges.push('daily_dialogue_10');
+        }
+        break;
+      case 'event':
+        newProgress.eventCount++;
+        if (newProgress.eventCount >= 3 && !completedChallenges.includes('daily_event_3')) {
+          completedChallenges.push('daily_event_3');
+        }
+        break;
+      case 'explore':
+        newProgress.scenesVisited++;
+        if (newProgress.scenesVisited >= 2 && !completedChallenges.includes('daily_explore')) {
+          completedChallenges.push('daily_explore');
+        }
+        break;
+      case 'social':
+        newProgress.npcTriggerCount++;
+        if (newProgress.npcTriggerCount >= 5 && !completedChallenges.includes('daily_npc')) {
+          completedChallenges.push('daily_npc');
+        }
+        break;
+    }
+
+    const newState = {
+      ...state.dailyState,
+      todayProgress: newProgress,
+      completedChallenges,
+    };
+    set({ dailyState: newState });
+    saveDailyState(newState);
+  },
+
   // Actions
   setScene: (sceneId: string) => {
     const scene = getSceneById(sceneId);
@@ -280,6 +483,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       } else {
         set({ currentScene: scene });
       }
+      // 更新每日探索进度
+      get().updateDailyProgress('explore');
       // 切换场景时自动存档
       get().autoSave();
     }
@@ -298,6 +503,8 @@ export const useGameStore = create<GameState>((set, get) => ({
     }));
     // 检查对话相关成就
     get().checkAchievements();
+    // 更新每日对话进度
+    get().updateDailyProgress('dialogue');
   },
 
   startGame: () => {
@@ -341,7 +548,11 @@ export const useGameStore = create<GameState>((set, get) => ({
       const newAchievements = { ...state.achievements, npcTriggerCount: newCount, progress: newProgress };
       set({ achievements: newAchievements });
       localStorage.setItem(ACHIEVEMENT_KEY, JSON.stringify(newAchievements));
+      // 更新每日NPC社交进度
+      get().updateDailyProgress('social');
     }
+    // 更新每日剧情进度
+    get().updateDailyProgress('event');
     // 重要事件后自动存档
     if (event.urgency === 'high' || event.type === 'big') {
       get().autoSave();
