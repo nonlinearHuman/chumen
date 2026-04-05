@@ -3,7 +3,7 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useGameStore } from '@/store/gameStore';
 import { useAgentChat } from '@/hooks/useAgentChat';
 import { useNPCTigger } from '@/hooks/useNPCTigger';
@@ -31,12 +31,71 @@ export default function Home() {
     speed,
     setSpeed,
     dialogues,
-    dramaEvents
+    dramaEvents,
+    saveGame,
+    loadGame,
+    hasSave,
+    deleteSave,
+    lastSaveTime,
   } = useGameStore();
   
   const { startChat, stopChat } = useAgentChat();
   const { triggerNPC } = useNPCTigger();
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
+
+  // 自动存档：每5分钟
+  useEffect(() => {
+    if (!isPlaying) return;
+    
+    const interval = setInterval(() => {
+      saveGame();
+      setSaveMessage('💾 自动存档完成');
+      setTimeout(() => setSaveMessage(null), 2000);
+    }, 5 * 60 * 1000); // 5分钟
+    
+    return () => clearInterval(interval);
+  }, [isPlaying, saveGame]);
+
+  const handleSave = useCallback(() => {
+    saveGame();
+    setSaveMessage('📁 存档成功');
+    setTimeout(() => setSaveMessage(null), 2000);
+  }, [saveGame]);
+
+  const handleLoad = useCallback(() => {
+    if (!hasSave()) return;
+    
+    try {
+      const saved = localStorage.getItem('chumen_save');
+      if (saved) {
+        const saveData = JSON.parse(saved);
+        if (saveData.version !== '1.0.0') {
+          setSaveMessage('⚠️ 存档版本不匹配，建议重新开始');
+          setTimeout(() => setSaveMessage(null), 3000);
+          return;
+        }
+        const success = loadGame(saveData);
+        if (success) {
+          setSaveMessage('📂 读档成功');
+        } else {
+          setSaveMessage('❌ 读档失败');
+        }
+        setTimeout(() => setSaveMessage(null), 2000);
+      }
+    } catch (e) {
+      setSaveMessage('❌ 存档损坏，无法加载');
+      setTimeout(() => setSaveMessage(null), 3000);
+    }
+  }, [hasSave, loadGame]);
+
+  const handleDeleteSave = useCallback(() => {
+    if (confirm('确定要删除存档吗？此操作不可恢复。')) {
+      deleteSave();
+      setSaveMessage('🗑️ 存档已删除');
+      setTimeout(() => setSaveMessage(null), 2000);
+    }
+  }, [deleteSave]);
 
   const handlePlay = () => {
     if (!isPlaying) {
@@ -98,6 +157,41 @@ export default function Home() {
             >
               💎 NFT
             </button>
+          </div>
+          
+          {/* 存档按钮 */}
+          <div className="flex items-center gap-2">
+            {saveMessage && (
+              <span className="text-sm text-purple-600 font-medium">{saveMessage}</span>
+            )}
+            {lastSaveTime && (
+              <span className="text-xs text-gray-400">
+                💾 {new Date(lastSaveTime).toLocaleTimeString()}
+              </span>
+            )}
+            <button
+              onClick={handleSave}
+              className="px-3 py-1 text-sm bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors"
+            >
+              📁 保存
+            </button>
+            {hasSave() && (
+              <button
+                onClick={handleLoad}
+                className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
+              >
+                📂 加载
+              </button>
+            )}
+            {hasSave() && (
+              <button
+                onClick={handleDeleteSave}
+                className="px-3 py-1 text-sm bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
+                title="删除存档"
+              >
+                🗑️
+              </button>
+            )}
           </div>
           
           <div className="flex items-center gap-4">
