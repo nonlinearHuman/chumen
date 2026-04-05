@@ -15,6 +15,7 @@ import { PixelWorld } from '@/game/components/PixelWorld';
 import { TutorialOverlay } from '@/components/TutorialOverlay';
 import { AchievementPopup } from '@/components/AchievementPopup';
 import { AchievementPanel } from '@/components/AchievementPanel';
+import { StatsPanel } from '@/components/StatsPanel';
 import { ACHIEVEMENTS } from '@/data/achievements';
 import { useDramaStorySync } from '@/hooks/useDramaStorySync';
 import { agents } from '@/config/agents';
@@ -24,6 +25,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<'chat' | 'pixel' | 'nft'>('chat');
   const [showTutorialOverlay, setShowTutorialOverlay] = useState(false);
   const [showAchievementPanel, setShowAchievementPanel] = useState(false);
+  const [showStats, setShowStats] = useState(false);
 
   const {
     tutorialCompleted,
@@ -186,6 +188,14 @@ export default function Home() {
             <span className="text-xs text-amber-500/70 hidden sm:inline">
               ({achievements.unlocked.length}/{ACHIEVEMENTS.length})
             </span>
+          </button>
+
+          {/* 统计按钮 */}
+          <button
+            onClick={() => setShowStats(true)}
+            className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200"
+          >
+            📊 统计
           </button>
 
           {/* Tab 切换 */}
@@ -468,6 +478,11 @@ export default function Home() {
       {/* 成就面板 */}
       {showAchievementPanel && (
         <AchievementPanel onClose={() => setShowAchievementPanel(false)} />
+      )}
+
+      {/* 统计面板 */}
+      {showStats && (
+        <StatsPanel onClose={() => setShowStats(false)} />
       )}
     </div>
   );

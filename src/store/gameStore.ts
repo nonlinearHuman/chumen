@@ -22,6 +22,32 @@ export interface AchievementState {
   npcTriggerCount: number; // NPC触发次数
 }
 
+// 游戏统计数据接口
+export interface GameStats {
+  // 对话统计
+  totalDialogues: number;
+  dialoguesPerScene: Record<string, number>;
+  // 剧情统计
+  totalEvents: number;
+  eventsByType: Record<string, number>;
+  // NPC触发统计
+  npcTriggers: number;
+  mostActiveNPC: string;
+  // 探索统计
+  visitedScenes: string[];
+  sceneVisits: Record<string, number>;
+  // 时间统计
+  totalPlayTime: number; // ms
+  sessionsCount: number;
+  longestSession: number; // ms
+  // NFT统计
+  mintedNFTs: number;
+  legendaryNFTs: number;
+  // 成就统计
+  achievementsUnlocked: number;
+  achievementPoints: number;
+}
+
 // 存档数据结构
 export interface SaveData {
   version: string;
@@ -57,6 +83,8 @@ interface GameState {
   lastSaveTime: number | null;
   playStartTime: number | null;
   cumulativePlayTime: number; // 累计游玩时长（毫秒）
+  sessionsCount: number; // 游戏次数
+  longestSession: number; // 最长单次游戏时长（毫秒）
   nftProgress: {
     mintedAgents: string[];
     unlockedStories: string[];
@@ -89,6 +117,9 @@ interface GameState {
   hasSave: () => boolean;
   deleteSave: () => void;
   autoSave: () => void;
+
+  // 统计方法
+  getStats: () => GameStats;
 }
 
 export const useGameStore = create<GameState>((set, get) => ({
@@ -102,6 +133,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   lastSaveTime: null,
   playStartTime: null,
   cumulativePlayTime: 0,
+  sessionsCount: 0,
+  longestSession: 0,
   nftProgress: {
     mintedAgents: [],
     unlockedStories: [],
@@ -268,7 +301,11 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   startGame: () => {
-    set({ isPlaying: true, playStartTime: Date.now() });
+    set(state => ({
+      isPlaying: true,
+      playStartTime: Date.now(),
+      sessionsCount: state.sessionsCount + 1,
+    }));
   },
 
   stopGame: () => {
@@ -276,10 +313,12 @@ export const useGameStore = create<GameState>((set, get) => ({
     const state = get();
     if (state.playStartTime) {
       const elapsed = Date.now() - state.playStartTime;
+      const newLongest = Math.max(state.longestSession, elapsed);
       set({
         isPlaying: false,
         playStartTime: null,
         cumulativePlayTime: state.cumulativePlayTime + elapsed,
+        longestSession: newLongest,
       });
     } else {
       set({ isPlaying: false });
@@ -388,5 +427,50 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (get().isPlaying) {
       get().saveGame();
     }
+  },
+
+  getStats: (): GameStats => {
+    const state = get();
+
+    // 计算对话按场景分布
+    const dialoguesPerScene: Record<string, number> = {};
+    state.dialogues.forEach(d => {
+      dialoguesPerScene[d.scene] = (dialoguesPerScene[d.scene] || 0) + 1;
+    });
+
+    // 计算事件按类型分布
+    const eventsByType: Record<string, number> = {};
+    state.dramaEvents.forEach(e => {
+      eventsByType[e.type] = (eventsByType[e.type] || 0) + 1;
+    });
+
+    // 计算场景访问次数
+    const sceneVisits: Record<string, number> = {};
+    state.dialogues.forEach(d => {
+      sceneVisits[d.scene] = (sceneVisits[d.scene] || 0) + 1;
+    });
+
+    // 计算当前总游玩时长（包括正在进行的）
+    const currentPlayTime = state.playStartTime
+      ? state.cumulativePlayTime + (Date.now() - state.playStartTime)
+      : state.cumulativePlayTime;
+
+    return {
+      totalDialogues: state.dialogues.length,
+      dialoguesPerScene,
+      totalEvents: state.dramaEvents.length,
+      eventsByType,
+      npcTriggers: state.achievements.npcTriggerCount,
+      mostActiveNPC: '', // TODO: 需要NPC触发追踪
+      visitedScenes: state.achievements.visitedScenes,
+      sceneVisits,
+      totalPlayTime: currentPlayTime,
+      sessionsCount: state.sessionsCount,
+      longestSession: state.longestSession,
+      mintedNFTs: state.nftProgress.mintedAgents.length,
+      legendaryNFTs: 0, // TODO: 需要NFT稀有度追踪
+      achievementsUnlocked: state.achievements.unlocked.length,
+      achievementPoints: state.achievements.totalPoints,
+    };
   },
 }));
