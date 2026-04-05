@@ -12,6 +12,57 @@ const SAVE_VERSION = '1.0.0';
 const SAVE_KEY = 'chumen_save';
 const TUTORIAL_KEY = 'chumen_tutorial_completed';
 const ACHIEVEMENT_KEY = 'chumen_achievements';
+const SETTINGS_KEY = 'chumen_settings';
+
+// ============ 游戏设置 ============
+
+export interface GameSettings {
+  masterVolume: number;
+  bgmVolume: number;
+  sfxVolume: number;
+  ambientEnabled: boolean;
+  showFPS: boolean;
+  showDialogueTimestamps: boolean;
+  animationSpeed: 'slow' | 'normal' | 'fast';
+  pixelQuality: 'low' | 'medium' | 'high';
+  autoSaveEnabled: boolean;
+  autoSaveInterval: number;
+  notificationsEnabled: boolean;
+  language: 'zh' | 'en';
+}
+
+export const DEFAULT_SETTINGS: GameSettings = {
+  masterVolume: 80,
+  bgmVolume: 30,
+  sfxVolume: 40,
+  ambientEnabled: true,
+  showFPS: false,
+  showDialogueTimestamps: true,
+  animationSpeed: 'normal',
+  pixelQuality: 'medium',
+  autoSaveEnabled: true,
+  autoSaveInterval: 5,
+  notificationsEnabled: false,
+  language: 'zh',
+};
+
+const loadSettings = (): GameSettings => {
+  if (typeof window === 'undefined') return DEFAULT_SETTINGS;
+  try {
+    const saved = localStorage.getItem(SETTINGS_KEY);
+    if (saved) {
+      return { ...DEFAULT_SETTINGS, ...JSON.parse(saved) };
+    }
+  } catch (e) {}
+  return DEFAULT_SETTINGS;
+};
+
+const saveSettings = (settings: GameSettings) => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  } catch (e) {}
+};
 
 // 成就状态数据结构
 export interface AchievementState {
@@ -143,6 +194,10 @@ interface GameState {
   activeAgents: Agent[];
   dramaEvents: DramaEvent[];
 
+  // 游戏设置
+  settings: GameSettings;
+  updateSettings: (partial: Partial<GameSettings>) => void;
+
   // 控制
   isPlaying: boolean;
   speed: number; // 对话速度 (ms)
@@ -214,6 +269,14 @@ export const useGameStore = create<GameState>((set, get) => ({
   nftProgress: {
     mintedAgents: [],
     unlockedStories: [],
+  },
+
+  // 游戏设置
+  settings: loadSettings(),
+  updateSettings: (partial: Partial<GameSettings>) => {
+    const newSettings = { ...get().settings, ...partial };
+    set({ settings: newSettings });
+    saveSettings(newSettings);
   },
 
   // 教程相关 - 初始值由 page.tsx 的 useEffect 设置

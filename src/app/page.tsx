@@ -17,6 +17,7 @@ import { AchievementPopup } from '@/components/AchievementPopup';
 import { AchievementPanel } from '@/components/AchievementPanel';
 import { StatsPanel } from '@/components/StatsPanel';
 import { DailyPanel } from '@/components/DailyPanel';
+import { SettingsPanel } from '@/components/SettingsPanel';
 import { ACHIEVEMENTS } from '@/data/achievements';
 import { useDramaStorySync } from '@/hooks/useDramaStorySync';
 import { agents } from '@/config/agents';
@@ -27,6 +28,7 @@ export default function Home() {
   const [showTutorialOverlay, setShowTutorialOverlay] = useState(false);
   const [showAchievementPanel, setShowAchievementPanel] = useState(false);
   const [showStats, setShowStats] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   const {
     tutorialCompleted,
@@ -217,6 +219,14 @@ export default function Home() {
             className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200"
           >
             📊 统计
+          </button>
+
+          {/* 设置按钮 */}
+          <button
+            onClick={() => setShowSettings(true)}
+            className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+          >
+            ⚙️ 设置
           </button>
 
           {/* Tab 切换 */}
@@ -509,6 +519,11 @@ export default function Home() {
       {/* 每日挑战面板 */}
       {dailyState.showDailyPanel && (
         <DailyPanel onClose={dismissDailyPanel} />
+      )}
+
+      {/* 设置面板 */}
+      {showSettings && (
+        <SettingsPanel onClose={() => setShowSettings(false)} />
       )}
     </div>
   );
