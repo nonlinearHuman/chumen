@@ -90,11 +90,12 @@ export const CameraHeader: React.FC<CameraHeaderProps> = ({
     <header
       className="fixed top-0 left-0 right-0 z-50 h-[64px]"
       style={{
-        background: 'rgba(10, 11, 15, 0.82)',
-        backdropFilter: 'blur(24px) saturate(1.5)',
-        WebkitBackdropFilter: 'blur(24px) saturate(1.5)',
-        borderBottom: '1px solid rgba(255,255,255,0.07)',
-        boxShadow: `0 4px 24px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.04), inset 0 -1px 0 rgba(0,0,0,0.3)`,
+        background: 'rgba(10, 11, 15, 0.80)',
+        backdropFilter: 'blur(18px) saturate(1.3)',
+        WebkitBackdropFilter: 'blur(18px) saturate(1.3)',
+        borderBottom: '1px solid rgba(255,255,255,0.06)',
+        /* Linear 克制：更轻的阴影，浅浅一层 */
+        boxShadow: `0 1px 0 rgba(255,255,255,0.04), 0 2px 12px rgba(0,0,0,0.4)`,
       }}
     >
       {/* Scene atmosphere accent line */}
@@ -135,7 +136,7 @@ export const CameraHeader: React.FC<CameraHeaderProps> = ({
                   boxShadow: `0 0 10px ${accentColor}20`,
                 }}
               >
-                <span style={{ filter: `drop-shadow(0 0 4px ${accentColor})` }}>
+                <span style={{ filter: `drop-shadow(0 0 3px ${accentColor}60)` }}>
                   {currentSceneData?.emoji}
                 </span>
                 <span className="hidden sm:inline">{currentSceneData?.name}</span>
@@ -153,11 +154,12 @@ export const CameraHeader: React.FC<CameraHeaderProps> = ({
                 <div
                   className="absolute top-full left-0 mt-2 p-3 rounded-xl z-50 animate-fade-in-up"
                   style={{
-                    background: 'rgba(18, 20, 28, 0.95)',
-                    backdropFilter: 'blur(24px)',
-                    WebkitBackdropFilter: 'blur(24px)',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    boxShadow: '0 16px 48px rgba(0,0,0,0.7)',
+                    background: 'rgba(18, 20, 28, 0.92)',
+                    backdropFilter: 'blur(18px)',
+                    WebkitBackdropFilter: 'blur(18px)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    /* Linear 克制：轻阴影就好，不要追求"深" */
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
                     minWidth: '320px',
                   }}
                 >
@@ -250,10 +252,10 @@ export const CameraHeader: React.FC<CameraHeaderProps> = ({
                 style={{
                   background: isActive ? 'rgba(0, 212, 255, 0.15)' : 'transparent',
                   color: isActive ? '#00d4ff' : 'rgba(139,143,168,0.8)',
+                  /* Apple 克制：去掉 textShadow，boxShadow 只留一圈薄边 */
                   boxShadow: isActive
-                    ? '0 0 12px rgba(0,212,255,0.25), inset 0 1px 0 rgba(255,255,255,0.1)'
+                    ? 'inset 0 1px 0 rgba(255,255,255,0.08)'
                     : 'none',
-                  textShadow: isActive ? '0 0 10px rgba(0,212,255,0.4)' : 'none',
                 }}
               >
                 <span>{tab.emoji}</span>

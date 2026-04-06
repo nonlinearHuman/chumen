@@ -80,7 +80,7 @@ export const BottomBar: React.FC<BottomBarProps> = ({
         >
           <span
             className="text-base"
-            style={{ filter: `drop-shadow(0 0 4px ${accentColor}80)` }}
+            style={{ filter: `drop-shadow(0 0 2px ${accentColor}50)` }}
           >
             {currentScene.emoji}
           </span>

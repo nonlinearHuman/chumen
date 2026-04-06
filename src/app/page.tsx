@@ -335,10 +335,10 @@ export default function Home() {
               <div
                 className="relative z-10 text-2xl flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-xl"
                 style={{
-                  background: `${accentColor}12`,
-                  border: `1px solid ${accentColor}30`,
-                  boxShadow: `0 0 16px ${accentColor}20`,
-                  filter: `drop-shadow(0 0 8px ${accentColor}60)`,
+                  background: `${accentColor}10`,
+                  border: `1px solid ${accentColor}25`,
+                  /* Apple 克制：去掉多余的 drop-shadow，只保留一层薄薄的底色 */
+                  filter: `drop-shadow(0 0 6px ${accentColor}40)`,
                 }}
               >
                 {currentScene.emoji}
@@ -477,7 +477,7 @@ export default function Home() {
                       </div>
                       <span
                         className="font-display font-bold text-3xl leading-none"
-                        style={{ color: accent, textShadow: `0 0 20px ${accent}60` }}
+                        style={{ color: accent }}
                       >
                         {value}
                       </span>
