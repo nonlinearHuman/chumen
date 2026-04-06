@@ -11,6 +11,8 @@ import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { AgentCard } from '@/components/AgentCard';
 import { DialogueBubble } from '@/components/DialogueBubble';
 import { HighlightDialogue, isHighlightDialogue } from '@/components/HighlightDialogue';
+import { StoryPanel } from '@/components/StoryPanel';
+import { BottomBar } from '@/components/BottomBar';
 import { NFTMarket } from '@/components/NFTMarket';
 import { PixelWorld } from '@/game/components/PixelWorld';
 import { TutorialOverlay } from '@/components/TutorialOverlay';
@@ -176,12 +178,16 @@ export default function Home() {
 
   const handleManualTrigger = () => { if (isPlaying) triggerNPC(); };
 
-  // ── Scene accent color for atmospheric glow ───────────────────────
+  // ── Scene accent color — refined cool-toned palette ──────────────
   const sceneAccents: Record<string, string> = {
-    coffee_shop:   '#c4a882', hospital:     '#a8c4d4',
-    court:         '#8b7355', office:       '#00d4ff',
-    apartment:     '#c4a882', street:       '#d4b896',
-    media_office:  '#ff8c00', police_station:'#4a90c4',
+    coffee_shop:    '#00d4ff',   // clean cyan for coffee scene
+    hospital:      '#a8c4d4',   // soft blue-gray
+    court:         '#8b8fa8',   // neutral slate
+    office:        '#00d4ff',   // primary cyan
+    apartment:     '#00d4ff',   // primary cyan
+    street:        '#8b8fa8',   // neutral
+    media_office:  '#ff8c00',   // amber for media
+    police_station: '#4a90c4',  // authoritative blue
   };
   const accentColor = sceneAccents[currentScene.id] ?? '#00d4ff';
 
@@ -194,18 +200,28 @@ export default function Home() {
         className="min-h-screen relative overflow-hidden"
         style={{ backgroundColor: 'var(--bg-deep)' }}
       >
-        {/* Ambient atmosphere orbs */}
+        {/* ── Refined ambient atmosphere: single subtle scene-tinted radial gradient ── */}
         <div
-          className="ambient-orb w-96 h-96 -top-20 -left-20"
-          style={{ background: accentColor, animationDelay: '0s' }}
+          className="ambient-orb"
+          style={{
+            width: '60vw',
+            height: '60vh',
+            top: '-10vh',
+            left: '-10vw',
+            background: `${accentColor}06`,
+            animationDelay: '0s',
+          }}
         />
         <div
-          className="ambient-orb w-80 h-80 top-1/2 -right-20"
-          style={{ background: '#ff2d78', animationDelay: '-7s' }}
-        />
-        <div
-          className="ambient-orb w-64 h-64 bottom-10 left-1/3"
-          style={{ background: '#00d4ff', animationDelay: '-14s' }}
+          className="ambient-orb"
+          style={{
+            width: '40vw',
+            height: '40vh',
+            bottom: '10vh',
+            right: '-5vw',
+            background: '#00d4ff04',
+            animationDelay: '-10s',
+          }}
         />
 
         {/* Fixed header */}
@@ -254,13 +270,13 @@ export default function Home() {
               </div>
             </div>
           ) : (
-            /* Desktop: floating glass sidebar */
+            /* Desktop: refined glass sidebar */
             <aside
               className="flex-none w-64 flex flex-col gap-3 overflow-y-auto p-4"
               style={{
-                background: 'rgba(10,11,15,0.5)',
-                backdropFilter: 'blur(16px)',
-                borderRight: '1px solid rgba(255,255,255,0.06)',
+                background: 'rgba(8, 9, 14, 0.55)',
+                backdropFilter: 'blur(20px) saturate(1.5)',
+                borderRight: '1px solid rgba(255,255,255,0.04)',
               }}
             >
               {/* Section label */}
@@ -294,171 +310,121 @@ export default function Home() {
           ══════════════════════════════════════════════════════════ */}
           <main className={`flex-1 flex flex-col ${isMobile ? '' : 'min-w-0'}`}>
 
-            {/* Scene banner */}
+            {/* Scene banner — refined with accent glow */}
             <div
               className="relative px-4 sm:px-6 py-3 flex items-center gap-3 overflow-hidden"
               style={{
-                background: `linear-gradient(135deg, rgba(10,11,15,0.9), rgba(18,20,28,0.8))`,
-                borderBottom: `1px solid rgba(255,255,255,0.05)`,
+                background: `linear-gradient(180deg, rgba(10,11,15,0.98) 0%, rgba(10,11,15,0.92) 100%)`,
+                borderBottom: `1px solid rgba(255,255,255,0.04)`,
               }}
             >
-              {/* Atmospheric glow */}
+              {/* Scene accent glow — subtle left-side gradient */}
               <div
                 className="absolute inset-0 pointer-events-none"
                 style={{
-                  background: `radial-gradient(ellipse at 20% 50%, ${accentColor}15, transparent 60%)`,
+                  background: `linear-gradient(90deg, ${accentColor}08 0%, transparent 40%)`,
+                }}
+              />
+              {/* Top accent line — the "scene color signature" */}
+              <div
+                className="absolute top-0 left-0 right-0 h-px"
+                style={{
+                  background: `linear-gradient(90deg, ${accentColor}60, ${accentColor}20 60%, transparent)`,
                 }}
               />
               <div
-                className="text-2xl flex-shrink-0"
-                style={{ filter: `drop-shadow(0 0 8px ${accentColor})` }}
+                className="relative z-10 text-2xl flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-xl"
+                style={{
+                  background: `${accentColor}12`,
+                  border: `1px solid ${accentColor}30`,
+                  boxShadow: `0 0 16px ${accentColor}20`,
+                  filter: `drop-shadow(0 0 8px ${accentColor}60)`,
+                }}
               >
                 {currentScene.emoji}
               </div>
               <div className="relative z-10 flex-1 min-w-0">
                 <h2
-                  className="font-display font-bold text-sm truncate"
-                  style={{ color: 'var(--text-primary)' }}
+                  className="font-display font-bold text-base truncate"
+                  style={{ color: 'var(--text-primary)', letterSpacing: '-0.01em' }}
                 >
                   {currentScene.name}
                 </h2>
                 {!isMobile && (
                   <p
                     className="text-xs truncate mt-0.5"
-                    style={{ color: 'rgba(139,143,168,0.6)' }}
+                    style={{ color: 'rgba(139,143,168,0.55)' }}
                   >
                     {currentScene.description}
                   </p>
                 )}
               </div>
 
-              {/* Cinematic Play/Stop button */}
+              {/* ── Dominant CTA: Cinematic Play/Stop Button ── */}
               <button
                 onClick={handlePlay}
-                className={`relative flex-shrink-0 flex items-center gap-2 px-5 py-2 rounded-full font-display font-bold text-sm
-                  transition-all duration-300 btn-spotlight overflow-hidden
+                className={`relative flex-shrink-0 flex items-center gap-2.5 px-6 py-2.5 rounded-full font-display font-bold text-sm
+                  transition-all duration-300 btn-spotlight overflow-hidden group
                   ${isPlaying ? 'animate-fade-curtain' : ''}`}
                 style={{
                   background: isPlaying
-                    ? 'rgba(255,45,120,0.15)'
-                    : `linear-gradient(135deg, ${accentColor}30, ${accentColor}15)`,
-                  border: `1px solid ${isPlaying ? 'rgba(255,45,120,0.5)' : `${accentColor}50`}`,
+                    ? 'linear-gradient(135deg, rgba(255,45,120,0.25), rgba(255,45,120,0.12))'
+                    : `linear-gradient(135deg, ${accentColor}28, ${accentColor}12)`,
+                  border: `1px solid ${isPlaying ? 'rgba(255,45,120,0.6)' : `${accentColor}55`}`,
                   color: isPlaying ? '#ff2d78' : accentColor,
                   boxShadow: isPlaying
-                    ? '0 0 20px rgba(255,45,120,0.3)'
-                    : `0 0 20px ${accentColor}30, radial-gradient(circle at 50% 0%, rgba(255,255,255,0.12), transparent 70%)`,
-                  letterSpacing: '0.08em',
+                    ? `0 0 24px rgba(255,45,120,0.35), 0 4px 16px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08)`
+                    : `0 0 24px ${accentColor}35, 0 4px 16px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1), inset 0 0 20px ${accentColor}10`,
+                  letterSpacing: '0.06em',
+                  fontSize: '13px',
+                  paddingLeft: '20px',
+                  paddingRight: '20px',
                 }}
               >
+                {/* Inner glow ring on hover */}
                 <span
-                  className={isPlaying ? 'animate-recording-pulse' : ''}
-                  style={{ fontSize: '10px' }}
-                >
-                  {isPlaying ? '■' : '▶'}
-                </span>
-                <span>{isPlaying ? '停止' : '开始'}</span>
-              </button>
-            </div>
-
-            {/* Dialogue stream */}
-            <div
-              className={`flex-1 overflow-y-auto px-4 sm:px-6 py-4 ${isMobile ? 'h-[calc(100vh-220px)]' : ''}`}
-              style={{ scrollBehavior: 'smooth' }}
-            >
-              {dialogues.length === 0 ? (
-                <div
-                  className="flex flex-col items-center justify-center h-full text-center gap-3"
-                  style={{ color: 'var(--text-muted)' }}
-                >
-                  {/* Cinematic frame */}
-                  <div
-                    className="relative w-20 h-20 rounded-full flex items-center justify-center mb-2"
-                    style={{
-                      background: `radial-gradient(circle, ${accentColor}20, transparent)`,
-                      border: `1px solid ${accentColor}30`,
-                    }}
-                  >
-                    <span className="text-4xl" style={{ filter: `drop-shadow(0 0 8px ${accentColor})` }}>
-                      🎬
-                    </span>
-                  </div>
-                  <p className="text-sm font-display" style={{ color: 'var(--text-secondary)' }}>
-                    点击「开始」启动真人秀
-                  </p>
-                  <p className="text-xs" style={{ color: 'var(--text-muted)', maxWidth: '280px' }}>
-                    AI Agent 将在场景中自由对话<br />
-                    NPC 会在关键时刻介入制造戏剧冲突
-                  </p>
-                </div>
-              ) : (
-                dialogues.slice(-20).map(dialogue =>
-                  isHighlightDialogue(dialogue.content)
-                    ? <HighlightDialogue key={dialogue.id} dialogue={dialogue} />
-                    : <DialogueBubble key={dialogue.id} dialogue={dialogue} />
-                )
-              )}
-            </div>
-
-            {/* Control bar */}
-            <div
-              className="px-4 sm:px-6 py-3 flex items-center gap-3 sm:gap-6"
-              style={{
-                background: 'rgba(10,11,15,0.7)',
-                backdropFilter: 'blur(16px)',
-                borderTop: '1px solid rgba(255,255,255,0.06)',
-              }}
-            >
-              {/* Speed */}
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-mono" style={{ color: 'rgba(139,143,168,0.6)', letterSpacing: '0.05em' }}>
-                  SPEED
-                </span>
-                <input
-                  type="range" min="2000" max="15000" step="500" value={speed}
-                  onChange={e => setSpeed(Number(e.target.value))}
-                  className="w-16 sm:w-24 accent-cyan-400"
-                  style={{ accentColor: accentColor }}
+                  className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                  style={{
+                    background: `radial-gradient(circle at 50% 50%, ${accentColor}20, transparent 70%)`,
+                    boxShadow: `0 0 30px ${accentColor}40`,
+                  }}
                 />
-                <span className="text-xs font-mono w-10 text-right" style={{ color: 'rgba(139,143,168,0.6)' }}>
-                  {speed / 1000}s
+                <span
+                  className={`relative z-10 flex items-center justify-center w-5 h-5 rounded-full ${isPlaying ? 'animate-recording-pulse' : ''}`}
+                  style={{
+                    background: isPlaying ? 'rgba(255,45,120,0.2)' : `${accentColor}20`,
+                    border: `1px solid ${isPlaying ? 'rgba(255,45,120,0.4)' : `${accentColor}40`}`,
+                  }}
+                >
+                  {isPlaying ? (
+                    <span className="text-[8px] font-bold" style={{ color: '#ff2d78' }}>■</span>
+                  ) : (
+                    <span className="text-[10px] font-bold" style={{ color: accentColor }}>▶</span>
+                  )}
                 </span>
-              </div>
-
-              {/* Status pill */}
-              <div
-                className="ml-auto flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-display font-medium"
-                style={{
-                  background: isPlaying ? 'rgba(255,45,120,0.12)' : 'rgba(255,255,255,0.04)',
-                  border: `1px solid ${isPlaying ? 'rgba(255,45,120,0.3)' : 'rgba(255,255,255,0.07)'}`,
-                  color: isPlaying ? '#ff2d78' : 'rgba(139,143,168,0.5)',
-                  boxShadow: isPlaying ? '0 0 10px rgba(255,45,120,0.2)' : 'none',
-                }}
-              >
-                <span className={isPlaying ? 'animate-recording-pulse text-sm' : 'text-sm'}>
-                  {isPlaying ? '●' : '○'}
-                </span>
-                <span>{isPlaying ? '直播中' : '已暂停'}</span>
-                <span className="font-mono text-[10px]" style={{ color: 'rgba(139,143,168,0.4)' }}>
-                  {dialogues.length} 条
-                </span>
-              </div>
-
-              {/* NPC trigger */}
-              <button
-                onClick={handleManualTrigger}
-                disabled={!isPlaying}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-display
-                  disabled:opacity-30 transition-all hover:brightness-110 active:scale-95"
-                style={{
-                  background: 'rgba(255,184,0,0.1)',
-                  border: '1px solid rgba(255,184,0,0.25)',
-                  color: '#ffb800',
-                }}
-              >
-                <span>🎲</span>
-                <span>NPC介入</span>
+                <span className="relative z-10">{isPlaying ? '停止' : '开始'}</span>
               </button>
             </div>
+
+            {/* StoryPanel — cinema-style dialogue */}
+            <StoryPanel
+              dialogues={dialogues}
+              isPlaying={isPlaying}
+              accentColor={accentColor}
+            />
+
+            {/* BottomBar — immersive control bar */}
+            <BottomBar
+              isPlaying={isPlaying}
+              speed={speed}
+              onSpeedChange={setSpeed}
+              currentScene={currentScene}
+              onSceneChange={(scene) => setScene(scene.id)}
+              scenes={scenes}
+              dialogueCount={dialogues.length}
+              onNPCTrigger={handleManualTrigger}
+              accentColor={accentColor}
+            />
           </main>
 
           {/* ══════════════════════════════════════════════════════════
@@ -468,9 +434,9 @@ export default function Home() {
             <aside
               className="flex-none w-72 flex flex-col gap-3 overflow-y-auto p-4"
               style={{
-                background: 'rgba(10,11,15,0.5)',
-                backdropFilter: 'blur(16px)',
-                borderLeft: '1px solid rgba(255,255,255,0.06)',
+                background: 'rgba(8, 9, 14, 0.6)',
+                backdropFilter: 'blur(20px) saturate(1.5)',
+                borderLeft: '1px solid rgba(255,255,255,0.04)',
               }}
             >
               {/* Section label */}
@@ -481,63 +447,87 @@ export default function Home() {
                 ── DASHBOARD ──
               </div>
 
-              {/* Stats — big number style */}
-              <div className="glass-panel rounded-xl p-4 space-y-3">
-                {[
-                  { label: '总对话',   value: dialogues.length,    color: accentColor },
-                  { label: '戏剧事件', value: dramaEvents.length,   color: '#ff2d78' },
-                  { label: '活跃角色', value: agents.length,         color: '#00d4ff' },
-                  { label: '场景数',   value: scenes.length,         color: '#a855f7' },
-                ].map(({ label, value, color }) => (
-                  <div key={label} className="flex items-center justify-between">
-                    <span className="text-xs" style={{ color: 'rgba(139,143,168,0.7)' }}>{label}</span>
-                    <span
-                      className="font-display font-bold text-2xl"
-                      style={{ color, textShadow: `0 0 12px ${color}50` }}
+              {/* Stats — refined 2x2 grid with accent glow */}
+              <div className="glass-panel rounded-xl p-4">
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { label: '总对话',   value: dialogues.length,    accent: accentColor,   icon: '💬' },
+                    { label: '戏剧事件', value: dramaEvents.length,   accent: '#ff2d78',     icon: '🔥' },
+                    { label: '活跃角色', value: agents.length,         accent: '#00d4ff',     icon: '👤' },
+                    { label: '场景数',   value: scenes.length,         accent: '#a855f7',     icon: '🎬' },
+                  ].map(({ label, value, accent, icon }) => (
+                    <div
+                      key={label}
+                      className="flex flex-col gap-1 p-3 rounded-lg relative overflow-hidden"
+                      style={{
+                        background: `${accent}08`,
+                        border: `1px solid ${accent}18`,
+                      }}
                     >
-                      {value}
-                    </span>
-                  </div>
-                ))}
+                      {/* Subtle top accent line */}
+                      <div
+                        className="absolute top-0 left-3 right-3 h-px"
+                        style={{ background: `linear-gradient(90deg, transparent, ${accent}40, transparent)` }}
+                      />
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-mono uppercase tracking-widest" style={{ color: `${accent}90` }}>
+                          {label}
+                        </span>
+                        <span style={{ filter: `drop-shadow(0 0 4px ${accent})` }}>{icon}</span>
+                      </div>
+                      <span
+                        className="font-display font-bold text-3xl leading-none"
+                        style={{ color: accent, textShadow: `0 0 20px ${accent}60` }}
+                      >
+                        {value}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
 
-              {/* Drama events — stacked card effect */}
+              {/* Drama events — refined stacked cards */}
               {dramaEvents.length > 0 && (
                 <div className="glass-panel rounded-xl p-4">
-                  <p
-                    className="text-[10px] font-mono uppercase tracking-widest mb-3"
-                    style={{ color: '#ff2d78', letterSpacing: '0.15em' }}
-                  >
-                    ── DRAMA ──
-                  </p>
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-[10px] font-mono uppercase tracking-widest" style={{ color: '#ff2d78', letterSpacing: '0.15em' }}>
+                      ── DRAMA ──
+                    </span>
+                    <div className="flex-1 h-px" style={{ background: 'linear-gradient(90deg, rgba(255,45,120,0.3), transparent)' }} />
+                  </div>
                   <div className="space-y-2">
                     {dramaEvents.slice(-4).reverse().map(event => {
                       const urgencyColor = event.urgency === 'high'
                         ? '#ff2d78' : event.urgency === 'medium' ? '#ffb800' : 'rgba(139,143,168,0.5)';
+                      const urgencyBg = event.urgency === 'high'
+                        ? 'rgba(255,45,120,0.08)'
+                        : event.urgency === 'medium' ? 'rgba(255,184,0,0.06)' : 'rgba(255,255,255,0.03)';
                       return (
                         <div
                           key={event.id}
-                          className="rounded-lg p-2.5 relative overflow-hidden"
+                          className="rounded-lg p-3 relative overflow-hidden"
                           style={{
-                            background: `${urgencyColor}10`,
-                            border: `1px solid ${urgencyColor}25`,
+                            background: urgencyBg,
+                            border: `1px solid ${urgencyColor}20`,
+                            borderLeft: `2px solid ${urgencyColor}`,
                           }}
                         >
-                          {/* Urgency glow */}
-                          {event.urgency === 'high' && (
-                            <div
-                              className="absolute inset-0 pointer-events-none"
-                              style={{ background: `radial-gradient(circle at 0% 50%, ${urgencyColor}20, transparent 60%)` }}
-                            />
-                          )}
                           <div className="relative">
-                            <p
-                              className="text-[10px] font-bold uppercase tracking-wider"
-                              style={{ color: urgencyColor, letterSpacing: '0.1em' }}
-                            >
-                              {event.type}
-                            </p>
-                            <p className="text-xs mt-1 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                            <div className="flex items-center gap-1.5 mb-1">
+                              <span
+                                className="text-[10px] font-bold uppercase tracking-wider"
+                                style={{ color: urgencyColor, letterSpacing: '0.1em' }}
+                              >
+                                {event.type}
+                              </span>
+                              {event.urgency === 'high' && (
+                                <span
+                                  className="animate-recording-pulse w-1.5 h-1.5 rounded-full"
+                                  style={{ background: urgencyColor }}
+                                />
+                              )}
+                            </div>
+                            <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
                               {event.content}
                             </p>
                           </div>
@@ -548,31 +538,28 @@ export default function Home() {
                 </div>
               )}
 
-              {/* About card */}
-              <div
-                className="rounded-xl p-4 relative overflow-hidden"
-                style={{
-                  background: `linear-gradient(135deg, rgba(0,212,255,0.06), rgba(255,45,120,0.06))`,
-                  border: '1px solid rgba(255,255,255,0.08)',
-                }}
-              >
+              {/* About card — refined glass panel */}
+              <div className="glass-panel rounded-xl p-4 relative overflow-hidden">
+                {/* Top accent line matching scene color */}
                 <div
-                  className="absolute inset-0 pointer-events-none"
-                  style={{ background: `radial-gradient(circle at 80% 20%, ${accentColor}10, transparent 50%)` }}
+                  className="absolute top-0 left-4 right-4 h-px"
+                  style={{ background: `linear-gradient(90deg, transparent, ${accentColor}50, transparent)` }}
                 />
-                <div className="relative">
-                  <p className="text-[10px] font-mono uppercase tracking-widest mb-2" style={{ color: '#00d4ff', letterSpacing: '0.15em' }}>
+                <div>
+                  <p className="text-[10px] font-mono uppercase tracking-widest mb-3" style={{ color: '#00d4ff', letterSpacing: '0.15em' }}>
                     ── ABOUT ──
                   </p>
                   <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
                     楚门是一个 AI 真人秀世界，10 个 AI Agent 在现代都市中自由生活与互动。
                   </p>
-                  <p className="text-xs mt-2 leading-relaxed" style={{ color: 'rgba(139,143,168,0.6)' }}>
-                    🎲 NPC 观察对话，在关键时刻介入制造戏剧性"爆点"！
-                  </p>
-                  <p className="text-xs mt-2" style={{ color: '#ffb800' }}>
-                    💎 持有 Agent NFT，成为 AI 的主人！
-                  </p>
+                  <div className="mt-3 space-y-1.5">
+                    <p className="text-xs" style={{ color: 'rgba(139,143,168,0.65)' }}>
+                      🎲 NPC 在关键时刻介入制造戏剧冲突
+                    </p>
+                    <p className="text-xs" style={{ color: '#ffb800' }}>
+                      💎 持有 Agent NFT，成为 AI 的主人
+                    </p>
+                  </div>
                 </div>
               </div>
 
@@ -617,14 +604,20 @@ export default function Home() {
                 )}
               </div>
 
-              {/* Status */}
+              {/* Status — refined pill indicator */}
               <div className="flex items-center justify-center gap-2 py-2 rounded-xl"
-                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                <span className={isPlaying ? 'animate-recording-pulse' : ''} style={{ color: isPlaying ? '#ff2d78' : 'rgba(139,143,168,0.4)', fontSize: '12px' }}>
+                style={{
+                  background: isPlaying ? 'rgba(255,45,120,0.06)' : 'rgba(255,255,255,0.02)',
+                  border: `1px solid ${isPlaying ? 'rgba(255,45,120,0.15)' : 'rgba(255,255,255,0.04)'}`,
+                }}>
+                <span
+                  className={isPlaying ? 'animate-recording-pulse' : ''}
+                  style={{ color: isPlaying ? '#ff2d78' : 'rgba(139,143,168,0.35)', fontSize: '10px' }}
+                >
                   ●
                 </span>
-                <span className="text-xs font-display" style={{ color: isPlaying ? '#ff2d78' : 'rgba(139,143,168,0.4)' }}>
-                  {isPlaying ? 'LIVE BROADCAST' : 'PAUSED'}
+                <span className="text-[11px] font-mono font-medium tracking-widest" style={{ color: isPlaying ? '#ff2d78' : 'rgba(139,143,168,0.35)', letterSpacing: '0.15em' }}>
+                  {isPlaying ? 'LIVE' : 'PAUSED'}
                 </span>
               </div>
             </aside>

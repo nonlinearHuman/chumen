@@ -31,15 +31,15 @@ const tabConfig = [
   { id: 'nft'   as const, label: 'NFT',      emoji: '💎' },
 ];
 
-// Scene atmosphere accent colors
+// Scene atmosphere accent colors — refined cool-toned palette
 const sceneAccents: Record<string, string> = {
-  coffee_shop:    '#c4a882',
-  hospital:       '#a8c4d4',
-  court:          '#8b7355',
-  office:         '#00d4ff',
-  apartment:      '#c4a882',
-  street:         '#d4b896',
-  media_office:   '#ff8c00',
+  coffee_shop:    '#00d4ff',
+  hospital:      '#a8c4d4',
+  court:         '#8b8fa8',
+  office:        '#00d4ff',
+  apartment:     '#00d4ff',
+  street:        '#8b8fa8',
+  media_office:  '#ff8c00',
   police_station: '#4a90c4',
 };
 
