@@ -774,5 +774,173 @@ AI 对话消息展示。
 
 ---
 
+## Agent Prompt Guide（第9部分 - AI工具快速调用）
+
+当你让 AI 编码工具（Claude Code、Cursor、Vercel v0 等）按此设计生成 UI 时，使用以下快捷参考。
+
+### 快速颜色变量
+
+```markdown
+## 颜色变量（直接复制使用）
+
+**背景色**
+- 主背景（深邃黑）: #0a0b0f
+- 卡片背景: #12141c
+- 浮层/Modal背景: #1a1d28
+- 毛玻璃: rgba(255,255,255,0.05) + blur(20px)
+- 像素世界背景: #0f0f1a
+
+**主色调**
+- 主交互/LIVE指示: #00d4ff（cyan）
+- 冲突/浪漫/警示: #ff2d78（magenta）
+- 成就/稀有NFT: #ffb800（gold）
+- 正向事件: #00ff88（green）
+- 剧情转折: #ff9500（amber）
+
+**文本色**
+- 主要文本: #e8e8f0
+- 次要文本: #8b8fa8
+- 占位符/禁用: #4a4d5e
+
+**边框色**
+- 默认边框: #2a2d3a
+- 聚焦边框: #00d4ff（带glow）
+
+**NFT稀有度**
+- Common: #9ca3af（无光晕）
+- Uncommon: #22c55e（微光）
+- Rare: #3b82f6（发光）
+- Epic: #a855f7（强发光）
+- Legendary: #f97316（脉冲）
+- Mythic: #fbbf24（彩虹脉冲）
+```
+
+### 组件风格速查
+
+```markdown
+## 组件规范
+
+**按钮**
+- 背景: #12141c
+- 边框: 1px solid #2a2d3a
+- 圆角: 8px
+- Hover: 边框变#00d4ff + box-shadow glow
+- 主按钮: 背景#00d4ff + 白色文字 + cyan glow
+
+**卡片**
+- 背景: #12141c
+- 边框: 1px solid #2a2d3a
+- 圆角: 12px
+- 内边距: 20px
+- Hover: 上浮2px + 边框发光
+- 阴影: 0 2px 8px rgba(0,0,0,0.3)
+
+**输入框**
+- 背景: #0a0b0f
+- 边框: 1px solid #2a2d3a
+- 圆角: 8px
+- 聚焦: 边框变#00d4ff + glow
+
+**胶囊标签/Pill**
+- 背景: rgba(255,255,255,0.08)
+- 圆角: 9999px
+- 内边距: 4px 12px
+```
+
+### 字体速查
+
+```markdown
+## 字体使用
+
+**导入**
+```css
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Press+Start+2P&display=swap');
+```
+
+**使用场景**
+- 标题/Display: font-family: 'Space Grotesk', sans-serif
+- 正文/对话: font-family: 'IBM Plex Sans', sans-serif
+- 代码/标签: font-family: 'JetBrains Mono', monospace
+- 像素世界: font-family: 'Press Start 2P', cursive（仅10px）
+
+**字号层级**
+- Hero: 48px / 700 / letter-spacing -2.4px
+- 大标题: 36px / 600
+- 区块标题: 28px / 600
+- 卡片标题: 22px / 600
+- 正文: 16px / 400
+- 标签: 12px / 400
+```
+
+### Tailwind Classes 速查
+
+```markdown
+## 常用 Tailwind 类
+
+**背景**
+- bg-chumen-deep: #0a0b0f
+- bg-chumen-surface: #12141c
+- bg-chumen-elevated: #1a1d28
+
+**文字**
+- text-chumen-text: #e8e8f0
+- text-chumen-text-secondary: #8b8fa8
+
+**边框**
+- border-chumen-border: #2a2d3a
+- border-chumen-cyan: #00d4ff
+
+**阴影/Glow**
+- shadow-chumen-sm/md/lg
+- shadow-glow-cyan/magenta/gold
+
+**动画**
+- animate-fade-in-up
+- animate-recording-pulse
+- animate-glow-pulse
+```
+
+### AI Prompt 模板
+
+```markdown
+## Prompt 模板
+
+**基础UI组件**
+"创建一个[组件名]，风格是楚门World的暗色电影感设计。
+主要颜色是#00d4ff（cyan），背景#12141c，使用毛玻璃效果。"
+
+**NFT相关**
+"创建一个NFT卡片，展示角色信息。
+稀有度光晕效果：Epic用紫色#a855f7强发光，Legendary用橙色#f97316脉冲。"
+
+**像素世界**
+"创建一个像素风格的HUD界面，字体用Press Start 2P，
+颜色用#00ffff（cyan）和#ff00ff（magenta）。"
+
+**对话界面**
+"创建一个Chat UI，气泡背景#1a1d28，
+冲突事件用#ff2d78边框高亮，浪漫事件用粉色。"
+```
+
+### 设计原则提醒
+
+```markdown
+## AI生成时必须遵守
+
+✅ DO:
+- 始终使用深色背景（#0a0b0f 或 #12141c）
+- 情绪色彩必须准确：冲突=#ff2d78，浪漫=#ff69b4
+- 主交互元素带glow效果
+- 保留"LIVE"/"REC●"等窥探感元素
+
+❌ DON'T:
+- 不要用浅色/白色背景
+- 不要所有元素同一深度
+- 不要混用衬线字体
+- 颜色必须通过CSS变量定义
+```
+
+---
+
 *DESIGN.md 是活文档，随着产品迭代持续更新。*
 *最后更新：2026-04-06*

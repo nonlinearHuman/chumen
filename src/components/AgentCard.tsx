@@ -1,4 +1,4 @@
-// AI 角色卡片组件 - 楚门World 新设计
+// 角色卡片 — 悬浮人物卡风格 (Premium 升级版)
 // src/components/AgentCard.tsx
 'use client';
 
@@ -15,21 +15,12 @@ interface AgentCardProps {
 }
 
 const emotionColors = {
-  neutral: '#4a4d5e',
-  happy: '#00ff88',
-  sad: '#3b82f6',
-  conflict: '#ff2d78',
-  romantic: '#ff69b4',
-  suspicious: '#ff9500',
-};
-
-const emotionLabels = {
-  neutral: '平静',
-  happy: '开心',
-  sad: '难过',
-  conflict: '冲突中',
-  romantic: '暧昧',
-  suspicious: '怀疑',
+  neutral:    { color: '#4a4d5e', label: '平静' },
+  happy:      { color: '#00ff88', label: '开心' },
+  sad:        { color: '#3b82f6', label: '难过' },
+  conflict:   { color: '#ff2d78', label: '冲突' },
+  romantic:   { color: '#ff69b4', label: '暧昧' },
+  suspicious: { color: '#ff9500', label: '怀疑' },
 };
 
 export const AgentCard: React.FC<AgentCardProps> = ({
@@ -40,105 +31,131 @@ export const AgentCard: React.FC<AgentCardProps> = ({
   onClick,
   compact = false,
 }) => {
-  const emotionColor = emotionColors[emotion];
+  const { color, label } = emotionColors[emotion];
 
+  // ── Compact sidebar mode ────────────────────────────────────────────
   if (compact) {
-    // Compact mode for sidebar list
     return (
       <div
         onClick={onClick}
-        className="relative flex items-center gap-3 p-3 rounded-chumen-lg cursor-pointer transition-all duration-200"
+        className="relative floating-card rounded-chumen-lg cursor-pointer select-none"
         style={{
-          background: isActive ? 'var(--bg-elevated)' : 'var(--bg-surface)',
-          border: `1px solid ${isActive ? 'var(--accent-cyan)' : 'var(--border)'}`,
-          boxShadow: isActive ? 'var(--glow-cyan)' : 'none',
-          transform: isActive ? 'none' : 'none',
+          padding: '10px 12px',
+          transform: isActive ? 'scale(1.02)' : 'scale(1)',
+          borderColor: isActive ? color : 'var(--border)',
+          border: `1px solid ${isActive ? color : 'var(--border)'}`,
         }}
       >
-        {/* Speaking indicator ring */}
+        {/* Speaking pulse ring */}
         {isSpeaking && (
-          <div
-            className="absolute inset-0 rounded-chumen-lg animate-glow-pulse pointer-events-none"
-            style={{ border: `2px solid ${emotionColor}`, opacity: 0.4 }}
+          <span
+            className="absolute inset-0 rounded-chumen-lg pointer-events-none"
+            style={{
+              border: `2px solid ${color}`,
+              opacity: 0.5,
+              animation: 'glow-pulse 1.5s ease-in-out infinite',
+            }}
           />
         )}
 
-        {/* Avatar */}
-        <div className="relative flex-shrink-0">
+        <div className="flex items-center gap-3">
+          {/* Avatar with emotion aura */}
           <div
-            className="w-10 h-10 rounded-full flex items-center justify-center text-2xl"
+            className={`relative flex-shrink-0 w-11 h-11 rounded-full flex items-center justify-center text-2xl
+              transition-all duration-300 emotion-aura-${emotion}`}
             style={{
-              boxShadow: `0 0 12px ${emotionColor}40`,
+              background: 'var(--bg-elevated)',
+              boxShadow: isSpeaking
+                ? `0 0 0 2px ${color}40, 0 0 20px ${color}60`
+                : `0 0 14px ${color}30`,
             }}
           >
             {agent.emoji}
+            {/* NPC gold badge */}
+            {agent.isNPC && (
+              <span
+                className="absolute -top-1.5 -right-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[8px] font-bold"
+                style={{
+                  background: 'linear-gradient(135deg, #ffb800, #ff8c00)',
+                  color: '#1a1000',
+                  boxShadow: '0 0 8px rgba(255, 184, 0, 0.6)',
+                  letterSpacing: '0.02em',
+                }}
+              >
+                <span>★</span>
+                <span>NFT</span>
+              </span>
+            )}
           </div>
-          {/* NPC badge */}
-          {agent.isNPC && (
-            <div
-              className="absolute -top-1 -right-1 px-1 py-0.5 rounded text-[8px] font-bold text-black"
-              style={{ background: 'var(--accent-gold)' }}
-            >
-              NPC
+
+          {/* Info */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span
+                className="text-sm font-display font-semibold text-chumen-text truncate"
+                style={{ color: isActive ? color : undefined }}
+              >
+                {agent.nameCN}
+              </span>
+              {/* Emotion indicator — outer glow dot */}
+              <span
+                className="flex-shrink-0 w-2.5 h-2.5 rounded-full"
+                style={{
+                  backgroundColor: color,
+                  boxShadow: `0 0 6px ${color}`,
+                }}
+              />
             </div>
-          )}
-        </div>
-
-        {/* Info */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5">
-            <span className="text-sm font-display font-semibold text-chumen-text truncate">
-              {agent.nameCN}
-            </span>
-            {/* Emotion indicator */}
-            <div
-              className="w-2 h-2 rounded-full flex-shrink-0"
-              style={{ backgroundColor: emotionColor }}
-              title={emotionLabels[emotion]}
-            />
+            <p className="text-xs text-chumen-text-muted truncate mt-0.5">{agent.role}</p>
           </div>
-          <p className="text-xs text-chumen-text-muted truncate">{agent.role}</p>
         </div>
 
-        {/* Emotion label */}
+        {/* Emotion tag strip at bottom */}
         {emotion !== 'neutral' && (
           <div
-            className="text-[9px] px-1.5 py-0.5 rounded-full font-mono"
+            className="mt-2 text-[9px] px-2 py-0.5 rounded-full font-mono font-medium text-center"
             style={{
-              background: `${emotionColor}15`,
-              color: emotionColor,
-              border: `1px solid ${emotionColor}40`,
+              background: `${color}12`,
+              color: color,
+              border: `1px solid ${color}30`,
+              letterSpacing: '0.08em',
             }}
           >
-            {emotionLabels[emotion]}
+            {label.toUpperCase()}
           </div>
         )}
       </div>
     );
   }
 
-  // Expanded mode
+  // ── Expanded mode ─────────────────────────────────────────────────────
   return (
     <div
       onClick={onClick}
-      className="rounded-chumen-lg cursor-pointer transition-all duration-200"
+      className="floating-card rounded-chumen-lg cursor-pointer select-none"
       style={{
-        background: 'var(--bg-surface)',
-        border: `1px solid ${isActive ? 'var(--accent-cyan)' : 'var(--border)'}`,
-        boxShadow: isActive ? 'var(--glow-cyan)' : 'var(--shadow-sm)',
+        borderColor: isActive ? color : 'var(--border)',
+        border: `1px solid ${isActive ? color : 'var(--border)'}`,
       }}
     >
       {/* Emotion bar at top */}
-      <div className="h-1 rounded-t-chumen-lg" style={{ backgroundColor: emotionColor }} />
+      <div
+        className="h-1 rounded-t-chumen-lg"
+        style={{
+          background: `linear-gradient(90deg, ${color}, ${color}60)`,
+          boxShadow: `0 0 12px ${color}60`,
+        }}
+      />
 
       <div className="p-4">
         <div className="flex items-start gap-3">
           {/* Avatar */}
           <div
-            className="w-14 h-14 rounded-full flex items-center justify-center text-4xl flex-shrink-0"
+            className={`w-14 h-14 rounded-full flex items-center justify-center text-4xl flex-shrink-0
+              emotion-aura-${emotion}`}
             style={{
-              boxShadow: `0 0 16px ${emotionColor}50`,
               background: 'var(--bg-elevated)',
+              boxShadow: `0 0 20px ${color}50, 0 0 40px ${color}20`,
             }}
           >
             {agent.emoji}
@@ -147,13 +164,23 @@ export const AgentCard: React.FC<AgentCardProps> = ({
           {/* Info */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <h3 className="font-display font-bold text-chumen-text">{agent.nameCN}</h3>
+              <h3
+                className="font-display font-bold text-chumen-text"
+                style={{ color: isActive ? color : undefined }}
+              >
+                {agent.nameCN}
+              </h3>
               {agent.isNPC && (
                 <span
-                  className="px-1.5 py-0.5 rounded text-[10px] font-bold"
-                  style={{ background: 'var(--accent-gold)', color: '#000' }}
+                  className="flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-bold"
+                  style={{
+                    background: 'linear-gradient(135deg, #ffb800, #ff8c00)',
+                    color: '#1a1000',
+                    boxShadow: '0 0 8px rgba(255, 184, 0, 0.5)',
+                  }}
                 >
-                  NPC
+                  <span>★</span>
+                  <span>NFT</span>
                 </span>
               )}
             </div>
@@ -162,20 +189,26 @@ export const AgentCard: React.FC<AgentCardProps> = ({
             {/* Emotion + Status */}
             <div className="flex items-center gap-2 mt-2">
               <div
-                className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs"
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
                 style={{
-                  background: `${emotionColor}15`,
-                  color: emotionColor,
+                  background: `${color}15`,
+                  color: color,
+                  border: `1px solid ${color}35`,
                 }}
               >
-                <div
-                  className="w-1.5 h-1.5 rounded-full"
-                  style={{ backgroundColor: emotionColor }}
+                <span
+                  className="w-2 h-2 rounded-full"
+                  style={{ backgroundColor: color, boxShadow: `0 0 6px ${color}` }}
                 />
-                {emotionLabels[emotion]}
+                {label}
               </div>
               {isSpeaking && (
-                <span className="text-xs text-chumen-cyan animate-pulse">说话中...</span>
+                <span
+                  className="text-xs font-mono animate-pulse"
+                  style={{ color, letterSpacing: '0.05em' }}
+                >
+                  ● SPEAKING
+                </span>
               )}
             </div>
           </div>
@@ -188,11 +221,11 @@ export const AgentCard: React.FC<AgentCardProps> = ({
 
         {/* Goals */}
         {agent.goals && agent.goals.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-3">
+          <div className="flex flex-wrap gap-1.5 mt-3">
             {agent.goals.slice(0, 2).map((goal, i) => (
               <span
                 key={i}
-                className="px-2 py-0.5 rounded-full text-xs"
+                className="px-2.5 py-0.5 rounded-full text-xs"
                 style={{
                   background: 'var(--bg-elevated)',
                   color: 'var(--text-secondary)',

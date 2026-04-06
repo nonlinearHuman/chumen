@@ -1,4 +1,4 @@
-// 楚门 - AI 真人秀世界 (整合 NFT 市场 + 像素世界)
+// 楚门 - AI 真人秀世界 (Premium 沉浸式布局)
 // src/app/page.tsx
 
 'use client';
@@ -38,7 +38,6 @@ export default function Home() {
   const [showTimeline, setShowTimeline] = useState(false);
   const [shareData, setShareData] = useState<{ type: 'achievement' | 'stats' | 'daily' | 'nft'; data: any } | null>(null);
   const [isMobile, setIsMobile] = useState(false);
-  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   const {
     tutorialCompleted,
@@ -55,21 +54,16 @@ export default function Home() {
     getStats,
   } = useGameStore();
 
-  // 检查是否需要显示教程（首次访问）
   useEffect(() => {
     const tutorialDone = localStorage.getItem('chumen_tutorial_completed');
     if (tutorialDone !== 'true') {
       setShowTutorialOverlay(true);
     }
-    // 检查每日重置
     checkDailyReset();
   }, []);
 
-  // 移动端检测
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
@@ -85,104 +79,58 @@ export default function Home() {
     setShowTutorialOverlay(false);
   }, [hideTutorial]);
 
-  // 剧情 → NFT故事线自动同步
   useDramaStorySync();
 
-  // 定期检查成就（每30秒检查一次，主要用于 play_time 成就）
   useEffect(() => {
-    const interval = setInterval(() => {
-      checkAchievements();
-    }, 30000);
+    const interval = setInterval(() => checkAchievements(), 30000);
     return () => clearInterval(interval);
   }, [checkAchievements]);
 
-  // NFT铸造后检查成就
   useEffect(() => {
-    if (nftProgress.mintedAgents.length > 0) {
-      checkAchievements();
-    }
+    if (nftProgress.mintedAgents.length > 0) checkAchievements();
   }, [nftProgress.mintedAgents.length, checkAchievements]);
 
-  // 注册键盘快捷键
-  useKeyboardShortcuts({
-    onSetTab: (tab) => setActiveTab(tab),
-  });
+  useKeyboardShortcuts({ onSetTab: (tab) => setActiveTab(tab) });
 
-  // 监听键盘快捷键派发的自定义事件
   useEffect(() => {
-    const handleCloseAll = () => {
-      setShowAchievementPanel(false);
-      setShowStats(false);
-      setShowSettings(false);
-      setShowRelationshipGraph(false);
-      setShowTimeline(false);
-    };
-    const handleToggleAchievements = () => setShowAchievementPanel(prev => !prev);
-    const handleToggleStats = () => setShowStats(prev => !prev);
-    const handleToggleDaily = () => {
-      const current = useGameStore.getState();
-      if (current.dailyState.showDailyPanel) {
-        current.dismissDailyPanel();
-      } else {
-        useGameStore.setState({
-          dailyState: { ...current.dailyState, showDailyPanel: true },
-        });
-      }
-    };
-    const handleToggleTimeline = () => setShowTimeline(prev => !prev);
-    const handleToggleRelationships = () => setShowRelationshipGraph(prev => !prev);
-    const handleToggleSettings = () => setShowSettings(prev => !prev);
-    const handleSaveSuccess = () => {
-      setSaveMessage('💾 已保存');
-      setTimeout(() => setSaveMessage(null), 2000);
-    };
-
     const events: [string, () => void][] = [
-      ['chumen:close-all-modals', handleCloseAll],
-      ['chumen:toggle-achievements', handleToggleAchievements],
-      ['chumen:toggle-stats', handleToggleStats],
-      ['chumen:toggle-daily', handleToggleDaily],
-      ['chumen:toggle-timeline', handleToggleTimeline],
-      ['chumen:toggle-relationships', handleToggleRelationships],
-      ['chumen:toggle-settings', handleToggleSettings],
-      ['chumen:save-success', handleSaveSuccess],
+      ['chumen:close-all-modals', () => {
+        setShowAchievementPanel(false); setShowStats(false); setShowSettings(false);
+        setShowRelationshipGraph(false); setShowTimeline(false);
+      }],
+      ['chumen:toggle-achievements', () => setShowAchievementPanel(p => !p)],
+      ['chumen:toggle-stats',         () => setShowStats(p => !p)],
+      ['chumen:toggle-daily', () => {
+        const cur = useGameStore.getState();
+        if (cur.dailyState.showDailyPanel) cur.dismissDailyPanel();
+        else useGameStore.setState({ dailyState: { ...cur.dailyState, showDailyPanel: true } });
+      }],
+      ['chumen:toggle-timeline',       () => setShowTimeline(p => !p)],
+      ['chumen:toggle-relationships', () => setShowRelationshipGraph(p => !p)],
+      ['chumen:toggle-settings',      () => setShowSettings(p => !p)],
     ];
     events.forEach(([type, handler]) => window.addEventListener(type, handler));
     return () => events.forEach(([type, handler]) => window.removeEventListener(type, handler));
   }, []);
 
-  const { 
-    currentScene, 
-    setScene, 
-    isPlaying, 
-    startGame, 
-    stopGame,
-    speed,
-    setSpeed,
-    dialogues,
-    dramaEvents,
-    saveGame,
-    loadGame,
-    hasSave,
-    deleteSave,
-    lastSaveTime,
+  const {
+    currentScene, setScene, isPlaying, startGame, stopGame,
+    speed, setSpeed, dialogues, dramaEvents, saveGame, loadGame,
+    hasSave, deleteSave,
   } = useGameStore();
-  
+
   const { startChat, stopChat } = useAgentChat();
   const { triggerNPC } = useNPCTigger();
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
-  // 自动存档：每5分钟
   useEffect(() => {
     if (!isPlaying) return;
-    
     const interval = setInterval(() => {
       saveGame();
       setSaveMessage('💾 自动存档完成');
       setTimeout(() => setSaveMessage(null), 2000);
-    }, 5 * 60 * 1000); // 5分钟
-    
+    }, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, [isPlaying, saveGame]);
 
@@ -194,26 +142,21 @@ export default function Home() {
 
   const handleLoad = useCallback(() => {
     if (!hasSave()) return;
-    
     try {
       const saved = localStorage.getItem('chumen_save');
       if (saved) {
         const saveData = JSON.parse(saved);
         if (saveData.version !== '1.0.0') {
-          setSaveMessage('⚠️ 存档版本不匹配，建议重新开始');
+          setSaveMessage('⚠️ 存档版本不匹配');
           setTimeout(() => setSaveMessage(null), 3000);
           return;
         }
-        const success = loadGame(saveData);
-        if (success) {
-          setSaveMessage('📂 读档成功');
-        } else {
-          setSaveMessage('❌ 读档失败');
-        }
+        const ok = loadGame(saveData);
+        setSaveMessage(ok ? '📂 读档成功' : '❌ 读档失败');
         setTimeout(() => setSaveMessage(null), 2000);
       }
-    } catch (e) {
-      setSaveMessage('❌ 存档损坏，无法加载');
+    } catch {
+      setSaveMessage('❌ 存档损坏');
       setTimeout(() => setSaveMessage(null), 3000);
     }
   }, [hasSave, loadGame]);
@@ -227,344 +170,574 @@ export default function Home() {
   }, [deleteSave]);
 
   const handlePlay = () => {
-    if (!isPlaying) {
-      startGame();
-      startChat();
-    } else {
-      stopGame();
-      stopChat();
-    }
+    if (!isPlaying) { startGame(); startChat(); }
+    else { stopGame(); stopChat(); }
   };
 
-  const handleManualTrigger = () => {
-    if (isPlaying) {
-      triggerNPC();
-    }
+  const handleManualTrigger = () => { if (isPlaying) triggerNPC(); };
+
+  // ── Scene accent color for atmospheric glow ───────────────────────
+  const sceneAccents: Record<string, string> = {
+    coffee_shop:   '#c4a882', hospital:     '#a8c4d4',
+    court:         '#8b7355', office:       '#00d4ff',
+    apartment:     '#c4a882', street:       '#d4b896',
+    media_office:  '#ff8c00', police_station:'#4a90c4',
   };
+  const accentColor = sceneAccents[currentScene.id] ?? '#00d4ff';
 
-  return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-deep)' }}>
-      {/* CameraHeader - 固定顶部 */}
-      <CameraHeader
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        liveStatus={isPlaying ? 'live' : 'paused'}
-        currentScene={currentScene.id}
-        onSceneChange={(sceneId) => {
-          const scene = scenes.find(s => s.id === sceneId);
-          if (scene) setScene(scene.id);
-        }}
-        achievementsTotal={ACHIEVEMENTS.length}
-        achievementsUnlocked={achievements.unlocked.length}
-        dailyChallenges={4}
-        dailyCompleted={dailyState.completedChallenges.length}
-        onOpenAchievements={() => setShowAchievementPanel(true)}
-        onOpenSettings={() => setShowSettings(true)}
-        onOpenStats={() => setShowStats(true)}
-        onOpenRelationships={() => setShowRelationshipGraph(true)}
-        onOpenTimeline={() => setShowTimeline(true)}
-        onSave={handleSave}
-        isMobile={isMobile}
-      />
+  // ─────────────────────────────────────────────────────────────────────
+  // CHAT TAB — Immersive 3-zone layout
+  // ─────────────────────────────────────────────────────────────────────
+  if (activeTab === 'chat') {
+    return (
+      <div
+        className="min-h-screen relative overflow-hidden"
+        style={{ backgroundColor: 'var(--bg-deep)' }}
+      >
+        {/* Ambient atmosphere orbs */}
+        <div
+          className="ambient-orb w-96 h-96 -top-20 -left-20"
+          style={{ background: accentColor, animationDelay: '0s' }}
+        />
+        <div
+          className="ambient-orb w-80 h-80 top-1/2 -right-20"
+          style={{ background: '#ff2d78', animationDelay: '-7s' }}
+        />
+        <div
+          className="ambient-orb w-64 h-64 bottom-10 left-1/3"
+          style={{ background: '#00d4ff', animationDelay: '-14s' }}
+        />
 
-      {/* 占位顶部空间（header高度64px） */}
-      <div className="h-[64px]" />
+        {/* Fixed header */}
+        <CameraHeader
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          liveStatus={isPlaying ? 'live' : 'paused'}
+          currentScene={currentScene.id}
+          onSceneChange={(sceneId) => {
+            const scene = scenes.find(s => s.id === sceneId);
+            if (scene) setScene(scene.id);
+          }}
+          achievementsTotal={ACHIEVEMENTS.length}
+          achievementsUnlocked={achievements.unlocked.length}
+          dailyChallenges={4}
+          dailyCompleted={dailyState.completedChallenges.length}
+          onOpenAchievements={() => setShowAchievementPanel(true)}
+          onOpenSettings={() => setShowSettings(true)}
+          onOpenStats={() => setShowStats(true)}
+          onOpenRelationships={() => setShowRelationshipGraph(true)}
+          onOpenTimeline={() => setShowTimeline(true)}
+          onSave={handleSave}
+          isMobile={isMobile}
+        />
 
-      {activeTab === 'chat' ? (
-        /* 会话视图 */
-        <main className={`${isMobile ? 'px-1 py-3' : 'max-w-7xl mx-auto px-4 py-6'}`}>
-          <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-4'}`}>
-            {/* 左侧：角色列表 */}
-            <div className={`${isMobile ? 'col-span-1' : 'lg:col-span-1'} space-y-4`}>
-              <h2 className="font-display font-bold px-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
-                👥 角色 ({agents.length})
-              </h2>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-1 gap-3 max-h-[30vh] sm:max-h-[50vh] overflow-y-auto px-1">
+        {/* Main layout — full viewport below header */}
+        <div className={`${isMobile ? 'flex flex-col h-[calc(100vh-64px)]' : 'flex h-[calc(100vh-64px)]'}`}>
+
+          {/* ══════════════════════════════════════════════════════════
+              LEFT — Floating Agent Sidebar
+          ══════════════════════════════════════════════════════════ */}
+          {isMobile ? (
+            /* Mobile: compact horizontal scroll strip at top */
+            <div className="flex-none border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+              <div className="flex gap-2 px-3 py-2 overflow-x-auto scrollbar-hide">
                 {agents.map(agent => (
-                  <AgentCard
-                    key={agent.id}
-                    agent={agent}
-                    isActive={selectedAgent === agent.id}
-                    onClick={() => setSelectedAgent(selectedAgent === agent.id ? null : agent.id)}
-                  />
+                  <div key={agent.id} className="flex-none w-36 animate-stagger-in">
+                    <AgentCard
+                      agent={agent}
+                      compact
+                      isActive={selectedAgent === agent.id}
+                      onClick={() => setSelectedAgent(selectedAgent === agent.id ? null : agent.id)}
+                    />
+                  </div>
                 ))}
               </div>
             </div>
+          ) : (
+            /* Desktop: floating glass sidebar */
+            <aside
+              className="flex-none w-64 flex flex-col gap-3 overflow-y-auto p-4"
+              style={{
+                background: 'rgba(10,11,15,0.5)',
+                backdropFilter: 'blur(16px)',
+                borderRight: '1px solid rgba(255,255,255,0.06)',
+              }}
+            >
+              {/* Section label */}
+              <div className="flex items-center gap-2 px-1 mb-1">
+                <span
+                  className="text-[10px] font-mono uppercase tracking-widest"
+                  style={{ color: 'rgba(139,143,168,0.5)', letterSpacing: '0.2em' }}
+                >
+                  ── CAST ──
+                </span>
+                <span className="ml-auto text-xs font-display" style={{ color: accentColor }}>
+                  {agents.length}
+                </span>
+              </div>
 
-            {/* 中间：对话区域 */}
-            <div className={`${isMobile ? 'col-span-1' : 'lg:col-span-2'}`}>
+              {agents.map((agent, i) => (
+                <div key={agent.id} className="animate-stagger-in" style={{ animationDelay: `${i * 0.05}s` }}>
+                  <AgentCard
+                    agent={agent}
+                    compact
+                    isActive={selectedAgent === agent.id}
+                    onClick={() => setSelectedAgent(selectedAgent === agent.id ? null : agent.id)}
+                  />
+                </div>
+              ))}
+            </aside>
+          )}
+
+          {/* ══════════════════════════════════════════════════════════
+              CENTER — Immersive Dialogue Stage
+          ══════════════════════════════════════════════════════════ */}
+          <main className={`flex-1 flex flex-col ${isMobile ? '' : 'min-w-0'}`}>
+
+            {/* Scene banner */}
+            <div
+              className="relative px-4 sm:px-6 py-3 flex items-center gap-3 overflow-hidden"
+              style={{
+                background: `linear-gradient(135deg, rgba(10,11,15,0.9), rgba(18,20,28,0.8))`,
+                borderBottom: `1px solid rgba(255,255,255,0.05)`,
+              }}
+            >
+              {/* Atmospheric glow */}
               <div
-                className={`rounded-chumen-lg p-4 ${isMobile ? 'h-[calc(100vh-280px)]' : 'h-[70vh]'} flex flex-col border`}
+                className="absolute inset-0 pointer-events-none"
                 style={{
-                  background: 'var(--bg-surface)',
-                  borderColor: 'var(--border)',
+                  background: `radial-gradient(ellipse at 20% 50%, ${accentColor}15, transparent 60%)`,
+                }}
+              />
+              <div
+                className="text-2xl flex-shrink-0"
+                style={{ filter: `drop-shadow(0 0 8px ${accentColor})` }}
+              >
+                {currentScene.emoji}
+              </div>
+              <div className="relative z-10 flex-1 min-w-0">
+                <h2
+                  className="font-display font-bold text-sm truncate"
+                  style={{ color: 'var(--text-primary)' }}
+                >
+                  {currentScene.name}
+                </h2>
+                {!isMobile && (
+                  <p
+                    className="text-xs truncate mt-0.5"
+                    style={{ color: 'rgba(139,143,168,0.6)' }}
+                  >
+                    {currentScene.description}
+                  </p>
+                )}
+              </div>
+
+              {/* Cinematic Play/Stop button */}
+              <button
+                onClick={handlePlay}
+                className={`relative flex-shrink-0 flex items-center gap-2 px-5 py-2 rounded-full font-display font-bold text-sm
+                  transition-all duration-300 btn-spotlight overflow-hidden
+                  ${isPlaying ? 'animate-fade-curtain' : ''}`}
+                style={{
+                  background: isPlaying
+                    ? 'rgba(255,45,120,0.15)'
+                    : `linear-gradient(135deg, ${accentColor}30, ${accentColor}15)`,
+                  border: `1px solid ${isPlaying ? 'rgba(255,45,120,0.5)' : `${accentColor}50`}`,
+                  color: isPlaying ? '#ff2d78' : accentColor,
+                  boxShadow: isPlaying
+                    ? '0 0 20px rgba(255,45,120,0.3)'
+                    : `0 0 20px ${accentColor}30, radial-gradient(circle at 50% 0%, rgba(255,255,255,0.12), transparent 70%)`,
+                  letterSpacing: '0.08em',
                 }}
               >
-                {/* 当前场景 + 播放控制栏 */}
-                <div className="flex items-center justify-between mb-3 pb-3 border-b" style={{ borderColor: 'var(--border)' }}>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl">{currentScene.emoji}</span>
-                    <div>
-                      <h2 className="font-display font-bold text-sm" style={{ color: 'var(--text-primary)' }}>
-                        {currentScene.name}
-                      </h2>
-                      {!isMobile && (
-                        <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                          {currentScene.description}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  {/* 播放控制 */}
-                  <button
-                    onClick={handlePlay}
-                    className="px-4 py-1.5 rounded-chumen-md font-display font-bold text-sm transition-all"
-                    style={{
-                      background: isPlaying ? 'var(--accent-magenta)' : 'var(--accent-green)',
-                      color: isPlaying ? '#fff' : '#000',
-                      boxShadow: isPlaying ? 'var(--glow-magenta)' : 'var(--glow-green)',
-                    }}
-                  >
-                    {isPlaying ? '⏹ 停止' : '▶ 开始'}
-                  </button>
-                </div>
-
-                {/* 对话流 */}
-                <div className="flex-1 overflow-y-auto space-y-2">
-                  {dialogues.length === 0 ? (
-                    <div className="text-center py-6 sm:py-10" style={{ color: 'var(--text-muted)' }}>
-                      <p className="text-3xl mb-3">🎬</p>
-                      <p className="text-sm">点击"开始"启动真人秀</p>
-                      <p className="text-xs mt-2" style={{ color: 'var(--text-secondary)' }}>
-                        AI Agent 将自动产生对话
-                      </p>
-                      <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
-                        NPC 会观察并在适当时机介入！
-                      </p>
-                    </div>
-                  ) : (
-                    dialogues.slice(-20).map(dialogue =>
-                      isHighlightDialogue(dialogue.content) ? (
-                        <HighlightDialogue key={dialogue.id} dialogue={dialogue} />
-                      ) : (
-                        <DialogueBubble key={dialogue.id} dialogue={dialogue} />
-                      )
-                    )
-                  )}
-                </div>
-
-                {/* 控制栏 */}
-                <div className="mt-3 pt-3 flex items-center gap-2 sm:gap-4 border-t" style={{ borderColor: 'var(--border)' }}>
-                  {/* 速度控制 */}
-                  <div className="flex items-center gap-1 sm:gap-2">
-                    <span className="text-xs font-mono" style={{ color: 'var(--text-secondary)' }}>速度:</span>
-                    <input
-                      type="range"
-                      min="2000"
-                      max="15000"
-                      step="500"
-                      value={speed}
-                      onChange={(e) => setSpeed(Number(e.target.value))}
-                      className="w-16 sm:w-24 accent-cyan-400"
-                      style={{ accentColor: 'var(--accent-cyan)' }}
-                    />
-                    <span className="text-xs font-mono w-12 sm:w-16" style={{ color: 'var(--text-secondary)' }}>
-                      {speed / 1000}s
-                    </span>
-                  </div>
-
-                  {/* NPC 触发 */}
-                  <button
-                    onClick={handleManualTrigger}
-                    disabled={!isPlaying}
-                    className="ml-auto px-3 py-1.5 rounded-chumen-sm text-xs font-display
-                      disabled:opacity-40 min-h-[36px]"
-                    style={{
-                      background: 'rgba(255, 184, 0, 0.15)',
-                      color: 'var(--accent-gold)',
-                      border: '1px solid rgba(255, 184, 0, 0.3)',
-                    }}
-                  >
-                    🎲 NPC 介入
-                  </button>
-                </div>
-              </div>
+                <span
+                  className={isPlaying ? 'animate-recording-pulse' : ''}
+                  style={{ fontSize: '10px' }}
+                >
+                  {isPlaying ? '■' : '▶'}
+                </span>
+                <span>{isPlaying ? '停止' : '开始'}</span>
+              </button>
             </div>
 
-            {/* 右侧：信息面板 - 桌面端显示，移动端折叠 */}
-            {!isMobile && (
-              <div className="lg:col-span-1 space-y-4">
-                {/* 统计面板 */}
-                <div className="rounded-chumen-lg p-4 border" style={{ background: 'var(--bg-surface)', borderColor: 'var(--border)' }}>
-                  <h3 className="font-display font-bold mb-3 text-sm" style={{ color: 'var(--text-primary)' }}>📊 统计</h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between items-center">
-                      <span style={{ color: 'var(--text-secondary)' }}>总对话数</span>
-                      <span className="font-display font-bold text-lg" style={{ color: 'var(--accent-cyan)' }}>{dialogues.length}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span style={{ color: 'var(--text-secondary)' }}>活跃角色</span>
-                      <span className="font-display font-bold">{agents.length}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span style={{ color: 'var(--text-secondary)' }}>场景数</span>
-                      <span className="font-display font-bold">{scenes.length}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span style={{ color: 'var(--text-secondary)' }}>戏剧事件</span>
-                      <span className="font-display font-bold" style={{ color: 'var(--accent-magenta)' }}>{dramaEvents.length}</span>
-                    </div>
+            {/* Dialogue stream */}
+            <div
+              className={`flex-1 overflow-y-auto px-4 sm:px-6 py-4 ${isMobile ? 'h-[calc(100vh-220px)]' : ''}`}
+              style={{ scrollBehavior: 'smooth' }}
+            >
+              {dialogues.length === 0 ? (
+                <div
+                  className="flex flex-col items-center justify-center h-full text-center gap-3"
+                  style={{ color: 'var(--text-muted)' }}
+                >
+                  {/* Cinematic frame */}
+                  <div
+                    className="relative w-20 h-20 rounded-full flex items-center justify-center mb-2"
+                    style={{
+                      background: `radial-gradient(circle, ${accentColor}20, transparent)`,
+                      border: `1px solid ${accentColor}30`,
+                    }}
+                  >
+                    <span className="text-4xl" style={{ filter: `drop-shadow(0 0 8px ${accentColor})` }}>
+                      🎬
+                    </span>
                   </div>
+                  <p className="text-sm font-display" style={{ color: 'var(--text-secondary)' }}>
+                    点击「开始」启动真人秀
+                  </p>
+                  <p className="text-xs" style={{ color: 'var(--text-muted)', maxWidth: '280px' }}>
+                    AI Agent 将在场景中自由对话<br />
+                    NPC 会在关键时刻介入制造戏剧冲突
+                  </p>
                 </div>
+              ) : (
+                dialogues.slice(-20).map(dialogue =>
+                  isHighlightDialogue(dialogue.content)
+                    ? <HighlightDialogue key={dialogue.id} dialogue={dialogue} />
+                    : <DialogueBubble key={dialogue.id} dialogue={dialogue} />
+                )
+              )}
+            </div>
 
-                {/* 戏剧事件 */}
-                {dramaEvents.length > 0 && (
-                  <div className="rounded-chumen-lg p-4 border max-h-48 overflow-y-auto" style={{ background: 'var(--bg-surface)', borderColor: 'var(--border)' }}>
-                    <h3 className="font-display font-bold mb-3 text-sm" style={{ color: 'var(--accent-magenta)' }}>🎭 戏剧事件</h3>
-                    <div className="space-y-2">
-                      {dramaEvents.slice(-5).reverse().map(event => (
+            {/* Control bar */}
+            <div
+              className="px-4 sm:px-6 py-3 flex items-center gap-3 sm:gap-6"
+              style={{
+                background: 'rgba(10,11,15,0.7)',
+                backdropFilter: 'blur(16px)',
+                borderTop: '1px solid rgba(255,255,255,0.06)',
+              }}
+            >
+              {/* Speed */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-mono" style={{ color: 'rgba(139,143,168,0.6)', letterSpacing: '0.05em' }}>
+                  SPEED
+                </span>
+                <input
+                  type="range" min="2000" max="15000" step="500" value={speed}
+                  onChange={e => setSpeed(Number(e.target.value))}
+                  className="w-16 sm:w-24 accent-cyan-400"
+                  style={{ accentColor: accentColor }}
+                />
+                <span className="text-xs font-mono w-10 text-right" style={{ color: 'rgba(139,143,168,0.6)' }}>
+                  {speed / 1000}s
+                </span>
+              </div>
+
+              {/* Status pill */}
+              <div
+                className="ml-auto flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-display font-medium"
+                style={{
+                  background: isPlaying ? 'rgba(255,45,120,0.12)' : 'rgba(255,255,255,0.04)',
+                  border: `1px solid ${isPlaying ? 'rgba(255,45,120,0.3)' : 'rgba(255,255,255,0.07)'}`,
+                  color: isPlaying ? '#ff2d78' : 'rgba(139,143,168,0.5)',
+                  boxShadow: isPlaying ? '0 0 10px rgba(255,45,120,0.2)' : 'none',
+                }}
+              >
+                <span className={isPlaying ? 'animate-recording-pulse text-sm' : 'text-sm'}>
+                  {isPlaying ? '●' : '○'}
+                </span>
+                <span>{isPlaying ? '直播中' : '已暂停'}</span>
+                <span className="font-mono text-[10px]" style={{ color: 'rgba(139,143,168,0.4)' }}>
+                  {dialogues.length} 条
+                </span>
+              </div>
+
+              {/* NPC trigger */}
+              <button
+                onClick={handleManualTrigger}
+                disabled={!isPlaying}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-display
+                  disabled:opacity-30 transition-all hover:brightness-110 active:scale-95"
+                style={{
+                  background: 'rgba(255,184,0,0.1)',
+                  border: '1px solid rgba(255,184,0,0.25)',
+                  color: '#ffb800',
+                }}
+              >
+                <span>🎲</span>
+                <span>NPC介入</span>
+              </button>
+            </div>
+          </main>
+
+          {/* ══════════════════════════════════════════════════════════
+              RIGHT — Glass Dashboard Widget (desktop only)
+          ══════════════════════════════════════════════════════════ */}
+          {!isMobile && (
+            <aside
+              className="flex-none w-72 flex flex-col gap-3 overflow-y-auto p-4"
+              style={{
+                background: 'rgba(10,11,15,0.5)',
+                backdropFilter: 'blur(16px)',
+                borderLeft: '1px solid rgba(255,255,255,0.06)',
+              }}
+            >
+              {/* Section label */}
+              <div
+                className="text-[10px] font-mono uppercase tracking-widest px-1"
+                style={{ color: 'rgba(139,143,168,0.5)', letterSpacing: '0.2em' }}
+              >
+                ── DASHBOARD ──
+              </div>
+
+              {/* Stats — big number style */}
+              <div className="glass-panel rounded-xl p-4 space-y-3">
+                {[
+                  { label: '总对话',   value: dialogues.length,    color: accentColor },
+                  { label: '戏剧事件', value: dramaEvents.length,   color: '#ff2d78' },
+                  { label: '活跃角色', value: agents.length,         color: '#00d4ff' },
+                  { label: '场景数',   value: scenes.length,         color: '#a855f7' },
+                ].map(({ label, value, color }) => (
+                  <div key={label} className="flex items-center justify-between">
+                    <span className="text-xs" style={{ color: 'rgba(139,143,168,0.7)' }}>{label}</span>
+                    <span
+                      className="font-display font-bold text-2xl"
+                      style={{ color, textShadow: `0 0 12px ${color}50` }}
+                    >
+                      {value}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Drama events — stacked card effect */}
+              {dramaEvents.length > 0 && (
+                <div className="glass-panel rounded-xl p-4">
+                  <p
+                    className="text-[10px] font-mono uppercase tracking-widest mb-3"
+                    style={{ color: '#ff2d78', letterSpacing: '0.15em' }}
+                  >
+                    ── DRAMA ──
+                  </p>
+                  <div className="space-y-2">
+                    {dramaEvents.slice(-4).reverse().map(event => {
+                      const urgencyColor = event.urgency === 'high'
+                        ? '#ff2d78' : event.urgency === 'medium' ? '#ffb800' : 'rgba(139,143,168,0.5)';
+                      return (
                         <div
                           key={event.id}
-                          className="text-xs p-2 rounded"
+                          className="rounded-lg p-2.5 relative overflow-hidden"
                           style={{
-                            background: event.urgency === 'high' ? 'rgba(255,45,120,0.1)' :
-                              event.urgency === 'medium' ? 'rgba(255,184,0,0.1)' :
-                              'var(--bg-elevated)',
-                            color: event.urgency === 'high' ? 'var(--accent-magenta)' :
-                              event.urgency === 'medium' ? 'var(--accent-amber)' :
-                              'var(--text-secondary)',
-                            border: `1px solid ${event.urgency === 'high' ? 'rgba(255,45,120,0.2)' : 'var(--border)'}`,
+                            background: `${urgencyColor}10`,
+                            border: `1px solid ${urgencyColor}25`,
                           }}
                         >
-                          <span className="font-bold">{event.type}</span>: {event.content}
+                          {/* Urgency glow */}
+                          {event.urgency === 'high' && (
+                            <div
+                              className="absolute inset-0 pointer-events-none"
+                              style={{ background: `radial-gradient(circle at 0% 50%, ${urgencyColor}20, transparent 60%)` }}
+                            />
+                          )}
+                          <div className="relative">
+                            <p
+                              className="text-[10px] font-bold uppercase tracking-wider"
+                              style={{ color: urgencyColor, letterSpacing: '0.1em' }}
+                            >
+                              {event.type}
+                            </p>
+                            <p className="text-xs mt-1 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                              {event.content}
+                            </p>
+                          </div>
                         </div>
-                      ))}
-                    </div>
+                      );
+                    })}
                   </div>
-                )}
+                </div>
+              )}
 
-                {/* 关于 */}
-                <div className="rounded-chumen-lg p-4 border" style={{
-                  background: 'linear-gradient(135deg, rgba(0,212,255,0.06), rgba(255,45,120,0.06))',
-                  borderImage: 'linear-gradient(135deg, rgba(0,212,255,0.3), rgba(255,45,120,0.3)) 1',
-                }}>
-                  <h3 className="font-display font-bold mb-2 text-sm" style={{ color: 'var(--accent-cyan)' }}>💡 关于</h3>
+              {/* About card */}
+              <div
+                className="rounded-xl p-4 relative overflow-hidden"
+                style={{
+                  background: `linear-gradient(135deg, rgba(0,212,255,0.06), rgba(255,45,120,0.06))`,
+                  border: '1px solid rgba(255,255,255,0.08)',
+                }}
+              >
+                <div
+                  className="absolute inset-0 pointer-events-none"
+                  style={{ background: `radial-gradient(circle at 80% 20%, ${accentColor}10, transparent 50%)` }}
+                />
+                <div className="relative">
+                  <p className="text-[10px] font-mono uppercase tracking-widest mb-2" style={{ color: '#00d4ff', letterSpacing: '0.15em' }}>
+                    ── ABOUT ──
+                  </p>
                   <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                    楚门是一个 AI 真人秀世界，10 个 AI Agent 在一个现代都市中自由生活、互动。
+                    楚门是一个 AI 真人秀世界，10 个 AI Agent 在现代都市中自由生活与互动。
                   </p>
-                  <p className="text-xs mt-2 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                    🎲 NPC 会观察对话，并在适当时机介入，制造戏剧性的"爆点"！
+                  <p className="text-xs mt-2 leading-relaxed" style={{ color: 'rgba(139,143,168,0.6)' }}>
+                    🎲 NPC 观察对话，在关键时刻介入制造戏剧性"爆点"！
                   </p>
-                  <p className="text-xs mt-2 leading-relaxed" style={{ color: 'var(--accent-gold)' }}>
+                  <p className="text-xs mt-2" style={{ color: '#ffb800' }}>
                     💎 持有 Agent NFT，成为 AI 的主人！
                   </p>
                 </div>
-
-                {/* 状态 */}
-                <div className="rounded-chumen-lg p-4 border text-center" style={{ background: 'var(--bg-surface)', borderColor: 'var(--border)' }}>
-                  <div
-                    className="px-3 py-2 rounded-chumen-md text-sm font-display font-bold inline-flex items-center gap-2"
-                    style={{
-                      background: isPlaying ? 'rgba(255,45,120,0.15)' : 'var(--bg-elevated)',
-                      color: isPlaying ? 'var(--accent-magenta)' : 'var(--text-muted)',
-                    }}
-                  >
-                    <span className={isPlaying ? 'animate-recording-pulse' : ''}>🔴</span>
-                    {isPlaying ? '直播中' : '已暂停'}
-                  </div>
-                </div>
               </div>
-            )}
+
+              {/* Save/load controls */}
+              <div className="glass-panel rounded-xl p-3 flex gap-2">
+                <button
+                  onClick={handleSave}
+                  className="flex-1 py-2 rounded-lg text-xs font-display transition-all hover:brightness-110 active:scale-95"
+                  style={{
+                    background: `${accentColor}15`,
+                    border: `1px solid ${accentColor}35`,
+                    color: accentColor,
+                  }}
+                >
+                  💾 存档
+                </button>
+                {hasSave() && (
+                  <>
+                    <button
+                      onClick={handleLoad}
+                      className="flex-1 py-2 rounded-lg text-xs font-display transition-all hover:brightness-110 active:scale-95"
+                      style={{
+                        background: 'rgba(255,255,255,0.05)',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        color: 'var(--text-secondary)',
+                      }}
+                    >
+                      📂 读档
+                    </button>
+                    <button
+                      onClick={handleDeleteSave}
+                      className="px-3 py-2 rounded-lg text-xs transition-all hover:brightness-110 active:scale-95"
+                      style={{
+                        background: 'rgba(255,59,59,0.1)',
+                        border: '1px solid rgba(255,59,59,0.2)',
+                        color: '#ff3b3b',
+                      }}
+                    >
+                      🗑
+                    </button>
+                  </>
+                )}
+              </div>
+
+              {/* Status */}
+              <div className="flex items-center justify-center gap-2 py-2 rounded-xl"
+                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <span className={isPlaying ? 'animate-recording-pulse' : ''} style={{ color: isPlaying ? '#ff2d78' : 'rgba(139,143,168,0.4)', fontSize: '12px' }}>
+                  ●
+                </span>
+                <span className="text-xs font-display" style={{ color: isPlaying ? '#ff2d78' : 'rgba(139,143,168,0.4)' }}>
+                  {isPlaying ? 'LIVE BROADCAST' : 'PAUSED'}
+                </span>
+              </div>
+            </aside>
+          )}
+        </div>
+
+        {/* Save toast */}
+        {saveMessage && (
+          <div
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full text-sm font-display
+              animate-fade-in-up z-50"
+            style={{
+              background: 'rgba(18,20,28,0.95)',
+              border: `1px solid ${accentColor}`,
+              color: accentColor,
+              boxShadow: `0 0 20px ${accentColor}40`,
+              backdropFilter: 'blur(12px)',
+            }}
+          >
+            {saveMessage}
           </div>
-        </main>
-      ) : activeTab === 'pixel' ? (
-        /* 像素世界视图 */
-        <main className={`${isMobile ? 'px-1 py-3' : 'max-w-5xl mx-auto px-4 py-6'}`}>
+        )}
+      </div>
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────────────────
+  // PIXEL WORLD TAB
+  // ─────────────────────────────────────────────────────────────────────
+  if (activeTab === 'pixel') {
+    return (
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-deep)' }}>
+        <CameraHeader
+          activeTab={activeTab} onTabChange={setActiveTab}
+          liveStatus={isPlaying ? 'live' : 'paused'}
+          currentScene={currentScene.id}
+          onSceneChange={sceneId => { const s = scenes.find(x => x.id === sceneId); if (s) setScene(s.id); }}
+          achievementsTotal={ACHIEVEMENTS.length} achievementsUnlocked={achievements.unlocked.length}
+          dailyChallenges={4} dailyCompleted={dailyState.completedChallenges.length}
+          onOpenAchievements={() => setShowAchievementPanel(true)} onOpenSettings={() => setShowSettings(true)}
+          onOpenStats={() => setShowStats(true)} onOpenRelationships={() => setShowRelationshipGraph(true)}
+          onOpenTimeline={() => setShowTimeline(true)} onSave={handleSave}
+          isMobile={isMobile}
+        />
+        <div className={`${isMobile ? 'px-1 py-3' : 'max-w-5xl mx-auto px-4 py-6'}`}>
           <div className={`bg-gray-900 ${isMobile ? 'rounded-none p-0' : 'rounded-xl p-4'}`}>
             <PixelWorld isMobile={isMobile} />
           </div>
-        </main>
-      ) : (
-        /* NFT 市场视图 */
-        <main className={`${isMobile ? 'px-1 py-3' : 'max-w-4xl mx-auto px-4 py-6'}`}>
-          <NFTMarket isMobile={isMobile} />
-        </main>
-      )}
+        </div>
+      </div>
+    );
+  }
 
-      {/* 教程浮层 */}
+  // ─────────────────────────────────────────────────────────────────────
+  // NFT MARKET TAB
+  // ─────────────────────────────────────────────────────────────────────
+  return (
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-deep)' }}>
+      <CameraHeader
+        activeTab={activeTab} onTabChange={setActiveTab}
+        liveStatus={isPlaying ? 'live' : 'paused'}
+        currentScene={currentScene.id}
+        onSceneChange={sceneId => { const s = scenes.find(x => x.id === sceneId); if (s) setScene(s.id); }}
+        achievementsTotal={ACHIEVEMENTS.length} achievementsUnlocked={achievements.unlocked.length}
+        dailyChallenges={4} dailyCompleted={dailyState.completedChallenges.length}
+        onOpenAchievements={() => setShowAchievementPanel(true)} onOpenSettings={() => setShowSettings(true)}
+        onOpenStats={() => setShowStats(true)} onOpenRelationships={() => setShowRelationshipGraph(true)}
+        onOpenTimeline={() => setShowTimeline(true)} onSave={handleSave}
+        isMobile={isMobile}
+      />
+      <main className={`${isMobile ? 'px-1 py-3' : 'max-w-4xl mx-auto px-4 py-6'}`}>
+        <NFTMarket isMobile={isMobile} />
+      </main>
       {showTutorialOverlay && (
-        <TutorialOverlay
-          onComplete={handleTutorialComplete}
-          onSkip={handleTutorialSkip}
-        />
+        <TutorialOverlay onComplete={handleTutorialComplete} onSkip={handleTutorialSkip} />
       )}
-
-      {/* 成就弹窗 */}
       {pendingAchievement && (
-        <AchievementPopup
-          achievement={pendingAchievement}
-          onDismiss={dismissPendingAchievement}
-        />
+        <AchievementPopup achievement={pendingAchievement} onDismiss={dismissPendingAchievement} />
       )}
-
-      {/* 成就面板 */}
       {showAchievementPanel && (
-        <AchievementPanel onClose={() => setShowAchievementPanel(false)} onShare={(type, data) => setShareData({ type, data })} />
+        <AchievementPanel onClose={() => setShowAchievementPanel(false)} onShare={(t, d) => setShareData({ type: t, data: d })} />
       )}
-
-      {/* 统计面板 */}
       {showStats && (
-        <StatsPanel onClose={() => setShowStats(false)} onShare={(type, data) => setShareData({ type, data })} />
+        <StatsPanel onClose={() => setShowStats(false)} onShare={(t, d) => setShareData({ type: t, data: d })} />
       )}
-
-      {/* 每日挑战面板 */}
       {dailyState.showDailyPanel && (
-        <DailyPanel onClose={dismissDailyPanel} onShare={(type, data) => setShareData({ type, data })} />
+        <DailyPanel onClose={dismissDailyPanel} onShare={(t, d) => setShareData({ type: t, data: d })} />
       )}
-
-      {/* 关系图谱弹窗 */}
       {showRelationshipGraph && (
-        <div className={`fixed inset-0 bg-black/50 z-50 ${isMobile ? '' : 'flex items-center justify-center'}`}>
+        <div className={`fixed inset-0 z-50 ${isMobile ? '' : 'flex items-center justify-center'}`}
+          style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)' }}>
           <div className={`bg-white ${isMobile ? 'w-full h-full' : 'rounded-2xl p-6 max-w-2xl w-full mx-4'}`}>
             <RelationshipGraph />
-            <button
-              onClick={() => setShowRelationshipGraph(false)}
-              className={`w-full px-4 py-3 bg-gray-200 rounded-lg hover:bg-gray-300 ${isMobile ? 'min-h-[44px]' : 'py-2'}`}
-            >
+            <button onClick={() => setShowRelationshipGraph(false)}
+              className={`w-full px-4 py-3 bg-gray-200 rounded-lg hover:bg-gray-300 ${isMobile ? 'min-h-[44px]' : 'py-2'}`}>
               关闭
             </button>
           </div>
         </div>
       )}
-
-      {/* 时间线弹窗 */}
       {showTimeline && (
-        <div className={`fixed inset-0 bg-black/50 z-50 ${isMobile ? '' : 'flex items-center justify-center'}`}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)' }}>
           <div className={`bg-white ${isMobile ? 'w-full h-full' : 'rounded-2xl max-w-lg w-full mx-4 max-h-[80vh] overflow-hidden'}`}>
             <GameTimeline />
-            <button
-              onClick={() => setShowTimeline(false)}
-              className={`w-full p-3 bg-gray-100 hover:bg-gray-200 ${isMobile ? 'min-h-[44px]' : ''}`}
-            >
+            <button onClick={() => setShowTimeline(false)} className={`w-full p-3 bg-gray-100 hover:bg-gray-200 ${isMobile ? 'min-h-[44px]' : ''}`}>
               关闭
             </button>
           </div>
         </div>
       )}
-
-      {/* 设置面板 */}
-      {showSettings && (
-        <SettingsPanel onClose={() => setShowSettings(false)} />
-      )}
-
-      {/* 分享卡片 */}
-      {shareData && (
-        <ShareCard
-          type={shareData.type}
-          data={shareData.data}
-          onClose={() => setShareData(null)}
-        />
-      )}
+      {showSettings && <SettingsPanel onClose={() => setShowSettings(false)} />}
+      {shareData && <ShareCard type={shareData.type} data={shareData.data} onClose={() => setShareData(null)} />}
     </div>
   );
 }

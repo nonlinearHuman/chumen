@@ -13,17 +13,35 @@ interface MintCharacterProps {
 }
 
 const RARITY_CONFIG: Record<Rarity, { label: string; color: string; glow: string; badge: string }> = {
+  mythic: { 
+    label: '神话', 
+    color: 'text-rose-600', 
+    glow: 'shadow-rose-400',
+    badge: '👑 神话'
+  },
   legendary: { 
     label: '传奇', 
     color: 'text-yellow-600', 
     glow: 'shadow-yellow-400',
     badge: '🌟 传奇'
   },
-  rare: { 
-    label: '稀有', 
+  epic: { 
+    label: '史诗', 
     color: 'text-purple-600', 
     glow: 'shadow-purple-400',
+    badge: '💜 史诗'
+  },
+  rare: { 
+    label: '稀有', 
+    color: 'text-blue-600', 
+    glow: 'shadow-blue-400',
     badge: '💎 稀有'
+  },
+  uncommon: { 
+    label: '精良', 
+    color: 'text-emerald-600', 
+    glow: 'shadow-emerald-400',
+    badge: '✨ 精良'
   },
   common: { 
     label: '普通', 

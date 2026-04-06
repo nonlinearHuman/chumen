@@ -30,7 +30,7 @@ export interface NFTListing {
 }
 
 // ===== 起源剧本 =====
-export type Rarity = 'common' | 'rare' | 'legendary';
+export type Rarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary' | 'mythic';
 
 export interface OriginStory {
   id: string;
@@ -50,7 +50,7 @@ export const ORIGIN_STORIES: OriginStory[] = [
     name: '失落的复仇者',
     description: '曾经辉煌，因背叛跌入谷底，如今隐忍蛰伏，只为一朝复仇',
     emoji: '😈',
-    rarity: 'legendary',
+    rarity: 'mythic',
     storyArcs: ['背叛与信任', '东山再起', '真相揭露'],
     weight: 1,
   },
@@ -61,16 +61,16 @@ export const ORIGIN_STORIES: OriginStory[] = [
     emoji: '🎭',
     rarity: 'legendary',
     storyArcs: ['身份暴露危机', '双面人生', '最终抉择'],
-    weight: 1,
+    weight: 2,
   },
   {
     id: 'rags_to_riches',
     name: '逆袭的野心家',
     description: '从社会底层爬上来，对权力和成功有强烈渴望',
     emoji: '📈',
-    rarity: 'rare',
+    rarity: 'epic',
     storyArcs: ['创业与危机', '阶级跨越', '金钱与道德'],
-    weight: 3,
+    weight: 4,
   },
   {
     id: 'secret_love',
@@ -79,7 +79,7 @@ export const ORIGIN_STORIES: OriginStory[] = [
     emoji: '💔',
     rarity: 'rare',
     storyArcs: ['暗恋与告白', '三角关系', '爱与放手'],
-    weight: 3,
+    weight: 8,
   },
   {
     id: 'betrayal_victim',
@@ -88,25 +88,25 @@ export const ORIGIN_STORIES: OriginStory[] = [
     emoji: '🩸',
     rarity: 'rare',
     storyArcs: ['背叛的阴影', '重建信任', '原谅或复仇'],
-    weight: 3,
+    weight: 8,
   },
   {
     id: 'idealist',
     name: '天真的理想主义者',
     description: '相信真善美，在现实中屡屡碰壁但依然坚持',
     emoji: '🌟',
-    rarity: 'common',
+    rarity: 'uncommon',
     storyArcs: ['现实打击', '坚守与妥协', '成长或沉沦'],
-    weight: 5,
+    weight: 15,
   },
   {
     id: 'opportunist',
     name: '精明的机会主义者',
     description: '永远在寻找下一个机会，善于利用一切资源',
     emoji: '🦊',
-    rarity: 'common',
+    rarity: 'uncommon',
     storyArcs: ['利益交换', '风险博弈', '成败论英雄'],
-    weight: 5,
+    weight: 15,
   },
   {
     id: 'mysterious_stranger',
@@ -115,7 +115,43 @@ export const ORIGIN_STORIES: OriginStory[] = [
     emoji: '🌫️',
     rarity: 'legendary',
     storyArcs: ['身世之谜', '融入或离去', '命运的交汇'],
+    weight: 2,
+  },
+  {
+    id: 'rising_star',
+    name: '天选之子',
+    description: '拥有某种特殊天赋或背景，注定要成就一番事业',
+    emoji: '⭐',
+    rarity: 'mythic',
+    storyArcs: ['天命觉醒', '使命与牺牲', '传奇诞生'],
     weight: 1,
+  },
+  {
+    id: 'ordinary',
+    name: '平凡人生',
+    description: '没有特殊的过去，但也期待着不平凡的未来',
+    emoji: '🌱',
+    rarity: 'common',
+    storyArcs: ['平凡日常', '意外转折', '自我发现'],
+    weight: 20,
+  },
+  {
+    id: 'survivor',
+    name: '生存专家',
+    description: '历经磨难生存下来，拥有超乎常人的意志',
+    emoji: '🛡️',
+    rarity: 'epic',
+    storyArcs: ['危机降临', '绝境求生', '浴火重生'],
+    weight: 4,
+  },
+  {
+    id: 'seeker',
+    name: '真相探寻者',
+    description: '对城市中的秘密充满好奇，总想揭开谜团',
+    emoji: '🔍',
+    rarity: 'uncommon',
+    storyArcs: ['发现线索', '深入调查', '真相大白'],
+    weight: 15,
   },
 ];
 
@@ -175,9 +211,74 @@ export interface AgentStats {
   tradeCount: number;      // 被交易次数
 }
 
-// ===== 稀有度配置 =====
-export const RARITY_CONFIG: Record<Rarity, { label: string; color: string; glow: string; badge: string }> = {
-  legendary: { label: '传奇', color: 'text-yellow-600', glow: 'shadow-yellow-400', badge: '🌟 传奇' },
-  rare: { label: '稀有', color: 'text-purple-600', glow: 'shadow-purple-400', badge: '💎 稀有' },
-  common: { label: '普通', color: 'text-gray-600', glow: 'shadow-gray-400', badge: '⚪ 普通' },
+// ===== 稀有度配置（6级）=====
+export const RARITY_CONFIG: Record<Rarity, {
+  label: string;
+  color: string;
+  glow: string;
+  badge: string;
+  bg: string;
+  border: string;
+  animation?: string;
+}> = {
+  mythic: {
+    label: '神话',
+    color: 'text-chumen-nft-mythic',
+    glow: 'shadow-chumen-nft-mythic',
+    badge: '👑 神话',
+    bg: 'bg-gradient-to-r from-rose-500 via-amber-400 to-emerald-500',
+    border: 'border-rose-400',
+    animation: 'animate-mythic-glow',
+  },
+  legendary: {
+    label: '传说',
+    color: 'text-chumen-nft-legendary',
+    glow: 'shadow-chumen-nft-legendary',
+    badge: '🌟 传说',
+    bg: 'bg-gradient-to-r from-yellow-500 via-amber-400 to-yellow-500',
+    border: 'border-yellow-500',
+    animation: 'animate-legendary-pulse',
+  },
+  epic: {
+    label: '史诗',
+    color: 'text-chumen-nft-epic',
+    glow: 'shadow-chumen-nft-epic',
+    badge: '💜 史诗',
+    bg: 'bg-purple-500',
+    border: 'border-purple-500',
+  },
+  rare: {
+    label: '稀有',
+    color: 'text-chumen-nft-rare',
+    glow: 'shadow-chumen-nft-rare',
+    badge: '💎 稀有',
+    bg: 'bg-blue-500',
+    border: 'border-blue-500',
+  },
+  uncommon: {
+    label: '精良',
+    color: 'text-chumen-nft-uncommon',
+    glow: 'shadow-chumen-nft-uncommon',
+    badge: '✨ 精良',
+    bg: 'bg-emerald-500',
+    border: 'border-emerald-500',
+  },
+  common: {
+    label: '普通',
+    color: 'text-gray-400',
+    glow: 'shadow-gray-400',
+    badge: '⚪ 普通',
+    bg: 'bg-gray-500',
+    border: 'border-gray-500',
+  },
+};
+
+// 稀有度排序权重（用于排序）
+export const RARITY_ORDER: Record<Rarity, number> = {
+  mythic: 6,
+  legendary: 5,
+  epic: 4,
+  rare: 3,
+  uncommon: 2,
+  common: 1,
 };
