@@ -277,6 +277,7 @@ export const CameraHeader: React.FC<CameraHeaderProps> = ({
         <div className="flex items-center gap-2">
           {/* Daily Challenge */}
           <button
+            aria-label={`每日任务：${dailyCompleted}/${dailyChallenges}完成`}
             onClick={onOpenStats}
             className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-display transition-all
               hover:brightness-110 active:scale-95"

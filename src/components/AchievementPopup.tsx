@@ -2,21 +2,47 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { Achievement } from '@/data/achievements';
+import { Share2, X } from 'lucide-react';
+
+// 稀有度配置
+const RARITY_CONFIG = {
+  common: { color: '#9ca3af', glow: 'none', label: '普通' },
+  uncommon: { color: '#22c55e', glow: '0 0 8px rgba(34,197,94,0.4)', label: '罕见' },
+  rare: { color: '#3b82f6', glow: '0 0 12px rgba(59,130,246,0.5)', label: '稀有' },
+  epic: { color: '#a855f7', glow: '0 0 16px rgba(168,85,247,0.6)', label: '史诗' },
+  legendary: { color: '#f97316', glow: '0 0 20px rgba(249,115,22,0.7)', label: '传奇' },
+  mythic: { color: '#fbbf24', glow: '0 0 24px rgba(251,191,36,0.8)', label: '神话' },
+};
+
+// 根据成就点数计算稀有度
+const getRarity = (points: number): keyof typeof RARITY_CONFIG => {
+  if (points >= 200) return 'mythic';
+  if (points >= 150) return 'legendary';
+  if (points >= 100) return 'epic';
+  if (points >= 50) return 'rare';
+  if (points >= 20) return 'uncommon';
+  return 'common';
+};
 
 interface AchievementPopupProps {
   achievement: Achievement;
   onDismiss: () => void;
+  onShare?: (achievement: Achievement) => void;
 }
 
 export const AchievementPopup: React.FC<AchievementPopupProps> = ({
   achievement,
   onDismiss,
+  onShare,
 }) => {
   const [phase, setPhase] = useState<'entering' | 'visible' | 'exiting'>('entering');
   const [badgeColor, setBadgeColor] = useState<'gray' | 'color'>('gray');
   const [glowVisible, setGlowVisible] = useState(false);
   const [newTagVisible, setNewTagVisible] = useState(false);
   const [sparkles, setSparkles] = useState<{ id: number; x: number; y: number; delay: number }[]>([]);
+  
+  const rarity = getRarity(achievement.points);
+  const rarityConfig = RARITY_CONFIG[rarity];
 
   const playSound = useCallback(() => {
     try {
@@ -198,7 +224,7 @@ export const AchievementPopup: React.FC<AchievementPopupProps> = ({
               {/* Outer pulse ring */}
               {glowVisible && (
                 <div
-                  className="absolute inset-0 rounded-full animate-achievement-ring"
+                  className="absolute inset-0 rounded-full animate-achievement-ring motion-reduce:animate-none"
                   style={{
                     border: '2px solid rgba(255,184,0,0.5)',
                     animation: 'achievement-ring-expand 1.5s ease-out infinite',
@@ -253,20 +279,20 @@ export const AchievementPopup: React.FC<AchievementPopupProps> = ({
             <div className="flex-1 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,184,0,0.3), transparent)' }} />
           </div>
 
-          {/* Points */}
-          <div className="flex items-center justify-center">
+          {/* Points & Rarity */}
+          <div className="flex items-center justify-center gap-3 mb-4">
             <div
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full"
               style={{
-                background: 'rgba(255,184,0,0.1)',
-                border: '1px solid rgba(255,184,0,0.3)',
+                background: `${rarityConfig.color}15`,
+                border: `1px solid ${rarityConfig.color}30`,
               }}
             >
-              <span style={{ color: '#ffb800', fontSize: '18px' }}>⭐</span>
+              <span style={{ color: rarityConfig.color, fontSize: '18px' }}>⭐</span>
               <span
                 className="font-bold"
                 style={{
-                  color: '#ffb800',
+                  color: rarityConfig.color,
                   fontFamily: "'Space Grotesk', sans-serif",
                   fontSize: '16px',
                 }}
@@ -275,7 +301,52 @@ export const AchievementPopup: React.FC<AchievementPopupProps> = ({
               </span>
               <span style={{ color: '#8b8fa8', fontSize: '12px' }}>成就积分</span>
             </div>
+            
+            {/* 稀有度标签 */}
+            <div
+              className="px-3 py-1.5 rounded-full text-xs font-medium"
+              style={{
+                background: `${rarityConfig.color}20`,
+                border: `1px solid ${rarityConfig.color}40`,
+                color: rarityConfig.color,
+                boxShadow: rarityConfig.glow,
+              }}
+            >
+              {rarityConfig.label}
+            </div>
           </div>
+
+          {/* 解锁条件说明 */}
+          <div 
+            className="px-3 py-2 rounded-lg text-xs mb-4"
+            style={{
+              background: 'rgba(255,255,255,0.03)',
+              border: '1px solid rgba(255,255,255,0.06)',
+              color: '#8b8fa8',
+            }}
+          >
+            <span style={{ color: '#4a4d5e' }}>解锁条件：</span>
+            {achievement.description}
+          </div>
+
+          {/* 分享按钮 */}
+          {onShare && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onShare(achievement);
+              }}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all hover:brightness-110"
+              style={{
+                background: `${rarityConfig.color}15`,
+                border: `1px solid ${rarityConfig.color}30`,
+                color: rarityConfig.color,
+              }}
+            >
+              <Share2 className="w-4 h-4" />
+              分享成就
+            </button>
+          )}
 
           {/* Dismiss hint */}
           <p

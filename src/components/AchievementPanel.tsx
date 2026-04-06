@@ -8,8 +8,49 @@ import {
   CATEGORY_NAMES,
   CATEGORY_ORDER,
 } from '@/data/achievements';
+import {
+  MessageSquare,
+  Users,
+  Map,
+  Diamond,
+  Star,
+  Trophy,
+  Lock,
+  Sparkles,
+  Share2,
+  X,
+} from 'lucide-react';
 
 type Filter = 'all' | Achievement['category'];
+
+// 稀有度配置
+const RARITY_CONFIG = {
+  common: { color: '#9ca3af', glow: 'none', label: '普通' },
+  uncommon: { color: '#22c55e', glow: '0 0 8px rgba(34,197,94,0.4)', label: '罕见' },
+  rare: { color: '#3b82f6', glow: '0 0 12px rgba(59,130,246,0.5)', label: '稀有' },
+  epic: { color: '#a855f7', glow: '0 0 16px rgba(168,85,247,0.6)', label: '史诗' },
+  legendary: { color: '#f97316', glow: '0 0 20px rgba(249,115,22,0.7)', label: '传奇' },
+  mythic: { color: '#fbbf24', glow: '0 0 24px rgba(251,191,36,0.8)', label: '神话' },
+};
+
+// 根据成就点数计算稀有度
+const getRarity = (points: number): keyof typeof RARITY_CONFIG => {
+  if (points >= 200) return 'mythic';
+  if (points >= 150) return 'legendary';
+  if (points >= 100) return 'epic';
+  if (points >= 50) return 'rare';
+  if (points >= 20) return 'uncommon';
+  return 'common';
+};
+
+// 分类图标映射
+const CATEGORY_ICONS: Record<Achievement['category'], React.ComponentType<{ className?: string }>> = {
+  story: MessageSquare,
+  social: Users,
+  explore: Map,
+  nft: Diamond,
+  special: Star,
+};
 
 interface AchievementPanelProps {
   onClose: () => void;
@@ -68,26 +109,44 @@ export const AchievementPanel: React.FC<AchievementPanelProps> = ({ onClose, onS
     <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4">
       {/* 背景遮罩 */}
       <div
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        className="absolute inset-0 backdrop-blur-md"
+        style={{ background: 'rgba(10,11,15,0.85)' }}
         onClick={onClose}
       />
 
       {/* 面板 */}
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden">
-        {/* 顶部装饰 */}
-        <div className="bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 h-1.5" />
+      <div 
+        className="relative w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden rounded-2xl"
+        style={{
+          background: 'linear-gradient(180deg, #1a1d28 0%, #12141c 100%)',
+          border: '1px solid rgba(255,184,0,0.2)',
+          boxShadow: '0 0 40px rgba(255,184,0,0.15), 0 16px 48px rgba(0,0,0,0.6)',
+        }}
+      >
+        {/* 顶部装饰线 */}
+        <div 
+          className="h-0.5 w-full"
+          style={{ background: 'linear-gradient(90deg, transparent, #ffb800, transparent)' }}
+        />
 
         {/* 头部 */}
-        <div className="px-6 pt-5 pb-4 border-b border-gray-100">
+        <div className="px-6 pt-5 pb-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-              🏆 成就中心
+            <h2 
+              className="text-xl font-bold flex items-center gap-2"
+              style={{ 
+                color: '#ffb800',
+                fontFamily: "'Space Grotesk', sans-serif",
+                textShadow: '0 0 20px rgba(255,184,0,0.3)',
+              }}
+            >
+              <Trophy className="w-6 h-6" />
+              成就中心
             </h2>
             <div className="flex items-center gap-2">
               {onShare && (
                 <button
                   onClick={() => {
-                    // 分享所有已解锁成就汇总
                     const unlockedAchievements = ACHIEVEMENTS.filter(a => achievements.unlocked.includes(a.id));
                     onShare('achievement', {
                       icon: '🏆',
@@ -95,35 +154,76 @@ export const AchievementPanel: React.FC<AchievementPanelProps> = ({ onClose, onS
                       description: unlockedAchievements.map(a => `${a.icon} ${a.title}`).join(' | ') || '暂无成就',
                     });
                   }}
-                  className="px-3 py-1 text-xs bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all hover:brightness-110"
+                  style={{
+                    background: 'rgba(168,85,247,0.15)',
+                    border: '1px solid rgba(168,85,247,0.3)',
+                    color: '#a855f7',
+                  }}
                 >
-                  📤 分享全部
+                  <Share2 className="w-3.5 h-3.5" />
+                  分享全部
                 </button>
               )}
               <button
                 onClick={onClose}
-                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 flex items-center justify-center transition-colors"
+                className="w-8 h-8 rounded-full flex items-center justify-center transition-all hover:brightness-125"
+                style={{
+                  background: 'rgba(255,255,255,0.05)',
+                  color: '#8b8fa8',
+                }}
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
             </div>
           </div>
 
           {/* 总体统计 */}
           <div className="grid grid-cols-3 gap-3">
-            <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5 text-center">
-              <div className="text-2xl font-bold text-amber-600">{unlockedCount}</div>
-              <div className="text-xs text-amber-600/70">已解锁</div>
-            </div>
-            <div className="bg-purple-50 border border-purple-200 rounded-xl px-3 py-2.5 text-center">
-              <div className="text-2xl font-bold text-purple-600">{totalPoints}</div>
-              <div className="text-xs text-purple-600/70">成就点数</div>
-            </div>
-            <div className="bg-blue-50 border border-blue-200 rounded-xl px-3 py-2.5 text-center">
-              <div className="text-2xl font-bold text-blue-600">
-                {totalAchievements - unlockedCount}
+            <div 
+              className="rounded-xl px-3 py-3 text-center"
+              style={{
+                background: 'rgba(255,184,0,0.08)',
+                border: '1px solid rgba(255,184,0,0.2)',
+              }}
+            >
+              <div 
+                className="text-2xl font-bold"
+                style={{ color: '#ffb800', fontFamily: "'Space Grotesk', sans-serif" }}
+              >
+                {unlockedCount}
               </div>
-              <div className="text-xs text-blue-600/70">待解锁</div>
+              <div className="text-xs mt-0.5" style={{ color: 'rgba(255,184,0,0.7)' }}>已解锁</div>
+            </div>
+            <div 
+              className="rounded-xl px-3 py-3 text-center"
+              style={{
+                background: 'rgba(168,85,247,0.08)',
+                border: '1px solid rgba(168,85,247,0.2)',
+              }}
+            >
+              <div 
+                className="text-2xl font-bold"
+                style={{ color: '#a855f7', fontFamily: "'Space Grotesk', sans-serif" }}
+              >
+                {totalPoints}
+              </div>
+              <div className="text-xs mt-0.5" style={{ color: 'rgba(168,85,247,0.7)' }}>成就点数</div>
+            </div>
+            <div 
+              className="rounded-xl px-3 py-3 text-center"
+              style={{
+                background: 'rgba(59,130,246,0.08)',
+                border: '1px solid rgba(59,130,246,0.2)',
+              }}
+            >
+              <div 
+                className="text-2xl font-bold"
+                style={{ color: '#3b82f6', fontFamily: "'Space Grotesk', sans-serif" }}
+              >
+                {unlockedCount}/{totalAchievements}
+              </div>
+              <div className="text-xs mt-0.5" style={{ color: 'rgba(59,130,246,0.7)' }}>收集进度</div>
             </div>
           </div>
 
@@ -131,27 +231,33 @@ export const AchievementPanel: React.FC<AchievementPanelProps> = ({ onClose, onS
           <div className="flex gap-2 mt-4 overflow-x-auto pb-1">
             <button
               onClick={() => setFilter('all')}
-              className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
-                filter === 'all'
-                  ? 'bg-amber-500 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
+              className="px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all"
+              style={{
+                background: filter === 'all' ? 'rgba(255,184,0,0.2)' : 'rgba(255,255,255,0.04)',
+                border: `1px solid ${filter === 'all' ? 'rgba(255,184,0,0.4)' : 'rgba(255,255,255,0.08)'}`,
+                color: filter === 'all' ? '#ffb800' : '#8b8fa8',
+              }}
             >
               全部 ({totalAchievements})
             </button>
-            {CATEGORY_ORDER.map(cat => (
-              <button
-                key={cat}
-                onClick={() => setFilter(cat)}
-                className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
-                  filter === cat
-                    ? 'bg-amber-500 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                {CATEGORY_NAMES[cat]} ({ACHIEVEMENTS.filter(a => a.category === cat).length})
-              </button>
-            ))}
+            {CATEGORY_ORDER.map(cat => {
+              const Icon = CATEGORY_ICONS[cat];
+              return (
+                <button
+                  key={cat}
+                  onClick={() => setFilter(cat)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all"
+                  style={{
+                    background: filter === cat ? 'rgba(255,184,0,0.2)' : 'rgba(255,255,255,0.04)',
+                    border: `1px solid ${filter === cat ? 'rgba(255,184,0,0.4)' : 'rgba(255,255,255,0.08)'}`,
+                    color: filter === cat ? '#ffb800' : '#8b8fa8',
+                  }}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  {CATEGORY_NAMES[cat]} ({ACHIEVEMENTS.filter(a => a.category === cat).length})
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -161,23 +267,33 @@ export const AchievementPanel: React.FC<AchievementPanelProps> = ({ onClose, onS
             const unlocked = isUnlocked(achievement.id);
             const progress = getProgress(achievement);
             const isSecret = achievement.secret && !unlocked;
+            const rarity = getRarity(achievement.points);
+            const rarityConfig = RARITY_CONFIG[rarity];
 
             return (
               <div
                 key={achievement.id}
-                className={`
-                  relative rounded-xl border p-4 transition-all
-                  ${unlocked
-                    ? 'bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-300 shadow-sm'
-                    : 'bg-gray-50 border-gray-200'
-                  }
-                  ${isSecret ? 'opacity-80' : ''}
-                `}
+                className="relative rounded-xl p-4 transition-all duration-300"
+                style={{
+                  background: unlocked 
+                    ? `linear-gradient(135deg, rgba(255,184,0,0.08) 0%, rgba(18,20,28,0.95) 100%)`
+                    : 'rgba(18,20,28,0.6)',
+                  border: `1px solid ${unlocked ? `${rarityConfig.color}40` : 'rgba(255,255,255,0.06)'}`,
+                  boxShadow: unlocked ? rarityConfig.glow : 'none',
+                  opacity: isSecret ? 0.7 : 1,
+                }}
               >
                 {/* 已解锁标签 */}
                 {unlocked && (
-                  <div className="absolute top-2 right-2 flex items-center gap-1">
-                    <span className="text-xs bg-amber-400 text-white rounded-full px-2 py-0.5 font-medium">
+                  <div className="absolute top-2 right-2 flex items-center gap-1.5">
+                    <span 
+                      className="text-xs rounded-full px-2 py-0.5 font-medium"
+                      style={{
+                        background: `${rarityConfig.color}20`,
+                        color: rarityConfig.color,
+                        border: `1px solid ${rarityConfig.color}40`,
+                      }}
+                    >
                       +{achievement.points}pt
                     </span>
                     {onShare && (
@@ -188,53 +304,94 @@ export const AchievementPanel: React.FC<AchievementPanelProps> = ({ onClose, onS
                             icon: achievement.icon,
                             title: achievement.title,
                             description: achievement.description,
+                            rarity: rarityConfig.label,
                           });
                         }}
-                        className="w-6 h-6 rounded-full bg-purple-100 hover:bg-purple-200 text-purple-600 flex items-center justify-center text-xs"
+                        className="w-6 h-6 rounded-full flex items-center justify-center text-xs transition-all hover:brightness-125"
+                        style={{
+                          background: 'rgba(168,85,247,0.15)',
+                          color: '#a855f7',
+                        }}
                         title="分享成就"
                       >
-                        📤
+                        <Share2 className="w-3 h-3" />
                       </button>
                     )}
                   </div>
                 )}
 
                 <div className="flex items-start gap-3">
-                  {/* 图标 */}
-                  <div
-                    className={`
-                      flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center text-2xl
-                      ${unlocked ? 'bg-white shadow-sm' : 'bg-gray-200 grayscale opacity-50'}
-                    `}
+                  {/* 图标徽章 */}
+                  <div 
+                    className="flex-shrink-0 w-14 h-14 rounded-xl flex items-center justify-center text-2xl relative"
+                    style={{
+                      background: unlocked ? `${rarityConfig.color}15` : 'rgba(255,255,255,0.03)',
+                      border: `1px solid ${unlocked ? `${rarityConfig.color}30` : 'rgba(255,255,255,0.08)'}`,
+                      boxShadow: unlocked ? rarityConfig.glow : 'none',
+                    }}
                   >
-                    {isSecret ? '❓' : achievement.icon}
+                    {isSecret ? (
+                      <Lock className="w-6 h-6" style={{ color: '#4a4d5e' }} />
+                    ) : (
+                      <>
+                        <span style={{ filter: unlocked ? 'none' : 'grayscale(1) opacity(0.4)' }}>
+                          {achievement.icon}
+                        </span>
+                        {unlocked && rarity !== 'common' && (
+                          <Sparkles 
+                            className="absolute -top-1 -right-1 w-4 h-4 animate-pulse motion-reduce:animate-none"
+                            style={{ color: rarityConfig.color }}
+                          />
+                        )}
+                      </>
+                    )}
                   </div>
 
                   {/* 内容 */}
                   <div className="flex-1 min-w-0">
-                    <h3 className={`font-bold text-sm mb-0.5 ${unlocked ? 'text-amber-900' : 'text-gray-500'}`}>
-                      {isSecret ? '???' : achievement.title}
-                    </h3>
-                    <p className={`text-xs mb-2 ${unlocked ? 'text-amber-700' : 'text-gray-400'}`}>
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 
+                        className="font-bold text-sm"
+                        style={{ color: unlocked ? rarityConfig.color : '#8b8fa8' }}
+                      >
+                        {isSecret ? '???' : achievement.title}
+                      </h3>
+                      {unlocked && (
+                        <span 
+                          className="text-[10px] px-1.5 py-0.5 rounded"
+                          style={{
+                            background: `${rarityConfig.color}20`,
+                            color: rarityConfig.color,
+                          }}
+                        >
+                          {rarityConfig.label}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs mb-2" style={{ color: unlocked ? '#e8e8f0' : '#4a4d5e' }}>
                       {isSecret ? '隐藏成就' : achievement.description}
                     </p>
 
                     {/* 进度条（未解锁时显示） */}
-                    {!unlocked && (
+                    {!unlocked && !isSecret && (
                       <div className="space-y-1">
-                        <div className="flex items-center justify-between text-xs text-gray-400">
+                        <div className="flex items-center justify-between text-xs" style={{ color: '#8b8fa8' }}>
                           <span>进度</span>
-                          <span>
-                            {Math.round(progress)}%
-                          </span>
+                          <span>{Math.round(progress)}%</span>
                         </div>
-                        <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                        <div 
+                          className="h-1.5 rounded-full overflow-hidden"
+                          style={{ background: 'rgba(255,255,255,0.06)' }}
+                        >
                           <div
-                            className="h-full bg-gradient-to-r from-amber-400 to-yellow-400 rounded-full transition-all duration-500"
-                            style={{ width: `${progress}%` }}
+                            className="h-full rounded-full transition-all duration-500"
+                            style={{ 
+                              width: `${progress}%`,
+                              background: `linear-gradient(90deg, ${rarityConfig.color}80, ${rarityConfig.color})`,
+                            }}
                           />
                         </div>
-                        <p className="text-xs text-gray-400 text-right">
+                        <p className="text-[10px] text-right" style={{ color: '#4a4d5e' }}>
                           {(() => {
                             let current = 0;
                             switch (achievement.requirement.type) {
@@ -257,7 +414,7 @@ export const AchievementPanel: React.FC<AchievementPanelProps> = ({ onClose, onS
 
                     {/* 已解锁显示奖励 */}
                     {unlocked && achievement.reward && (
-                      <p className="text-xs text-amber-600/80 italic">
+                      <p className="text-xs mt-1" style={{ color: 'rgba(255,184,0,0.7)' }}>
                         奖励: {achievement.reward.description}
                       </p>
                     )}

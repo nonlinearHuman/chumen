@@ -7,18 +7,24 @@ const spaceGrotesk = Space_Grotesk({
   variable: "--font-space-grotesk",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
+  display: "swap", // Phase 3.3: 字体优化 - 使用 swap 策略
+  preload: true,
 });
 
 const ibmPlexSans = IBM_Plex_Sans({
   variable: "--font-ibm-plex-sans",
   subsets: ["latin"],
   weight: ["400", "500", "600"],
+  display: "swap", // Phase 3.3: 字体优化 - 使用 swap 策略
+  preload: true,
 });
 
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains-mono",
   subsets: ["latin"],
   weight: ["400", "500"],
+  display: "swap", // Phase 3.3: 字体优化 - 使用 swap 策略
+  preload: true,
 });
 
 export const metadata: Metadata = {

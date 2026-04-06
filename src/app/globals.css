@@ -826,9 +826,9 @@
   --space-2xl: 48px;
 
   /* Border Radius */
-  --radius-sm: 6px;
+  --radius-sm: 4px;
   --radius-md: 8px;
-  --radius-lg: 12px;
+  --radius-lg: 16px;
   --radius-pill: 9999px;
 }
 
@@ -1044,6 +1044,98 @@ body {
   }
 }
 
+/* ===== Accessibility: Reduced Motion ===== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  .animate-fade-in-up,
+  .animate-recording-pulse,
+  .animate-glow-pulse,
+  .animate-gold-pulse,
+  .animate-legendary-pulse,
+  .animate-mythic-rainbow,
+  .animate-drama-pulse,
+  .animate-spring-bounce,
+  .animate-slide-in-right,
+  .animate-shutter-flash,
+  .animate-stagger-in,
+  .animate-typewriter,
+  .animate-fade-curtain {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  
+  .btn-primary:hover,
+  .btn-secondary:hover,
+  .btn-icon:hover,
+  .floating-card:hover,
+  .card-interactive:hover,
+  .filmstrip-card:hover {
+    transform: none !important;
+  }
+}
+
+/* ===== Focus Visible States ===== */
+.btn-primary:focus-visible,
+.btn-secondary:focus-visible,
+.btn-ghost:focus-visible,
+.btn-icon:focus-visible,
+.btn-danger:focus-visible,
+.btn-gold:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--bg-deep), 0 0 0 4px var(--accent-cyan), var(--glow-cyan);
+}
+
+.input-field:focus-visible,
+.textarea-field:focus-visible,
+.select-field:focus-visible {
+  outline: none;
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.12), inset 0 2px 4px rgba(0, 0, 0, 0.2), 0 0 16px rgba(0, 212, 255, 0.15);
+}
+
+.floating-card:focus-visible,
+.card-interactive:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--accent-cyan), 0 4px 8px rgba(0, 0, 0, 0.3), 0 16px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 212, 255, 0.15);
+}
+
+/* ===== Touch Targets (Mobile) ===== */
+@media (max-width: 768px) {
+  .btn-primary,
+  .btn-secondary,
+  .btn-ghost,
+  .btn-danger,
+  .btn-gold {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  .btn-icon {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  
+  .checkbox-custom,
+  .radio-custom {
+    min-width: 24px;
+    min-height: 24px;
+  }
+  
+  .pill-tag {
+    min-height: 32px;
+    padding: 6px 14px;
+  }
+}
+
 /* Pixel font utility */
 .font-pixel {
   font-family: 'Press Start 2P', cursive;
@@ -1216,4 +1308,164 @@ body {
   pointer-events: none;
   z-index: 0;
   animation: ambient-orb 28s ease-in-out infinite;
+}
+
+/* ===== Phase 1.3: 微交互增强 ===== */
+
+/* 按钮按下效果 */
+.btn-primary:active,
+.btn-secondary:active,
+.btn-ghost:active,
+.btn-icon:active,
+.btn-danger:active,
+.btn-gold:active {
+  transform: scale(0.97) !important;
+  transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 卡片 hover 增强 - 轻微上浮 + 边框发光 */
+.card-hover-lift {
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.25s ease;
+}
+
+.card-hover-lift:hover {
+  transform: translateY(-4px);
+  border-color: rgba(0, 212, 255, 0.4);
+  box-shadow: 
+    0 8px 28px rgba(0, 0, 0, 0.5),
+    0 0 20px rgba(0, 212, 255, 0.15),
+    inset 0 1px 0 rgba(0, 212, 255, 0.1);
+}
+
+/* 输入框 focus 渐变过渡 */
+.input-field,
+.textarea-field,
+.select-field {
+  transition: 
+    border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    background-color 0.25s ease;
+}
+
+/* 列表项 hover 背景渐变 */
+.list-item-interactive {
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  cursor: pointer;
+}
+
+.list-item-interactive:hover {
+  background-color: rgba(255, 255, 255, 0.04);
+  transform: translateX(2px);
+}
+
+.list-item-interactive:active {
+  background-color: rgba(255, 255, 255, 0.06);
+  transform: translateX(1px);
+}
+
+/* 导航项 hover 下划线动画 */
+.nav-link {
+  position: relative;
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--accent-cyan);
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-link:hover::after {
+  width: 100%;
+}
+
+/* 标签 hover 缩放 */
+.tag-interactive {
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.tag-interactive:hover {
+  transform: scale(1.08);
+}
+
+/* 图标按钮 hover 旋转 */
+.icon-spin-hover:hover {
+  animation: icon-spin 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes icon-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 脉冲点击效果 */
+.ripple-effect {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple-effect::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at var(--ripple-x, 50%) var(--ripple-y, 50%), 
+    rgba(0, 212, 255, 0.3) 0%, 
+    transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.ripple-effect:active::before {
+  opacity: 1;
+  transition: opacity 0s;
+}
+
+/* 加载状态 - 脉冲边框 */
+@keyframes loading-pulse-border {
+  0%, 100% { 
+    border-color: rgba(0, 212, 255, 0.3);
+    box-shadow: 0 0 10px rgba(0, 212, 255, 0.1);
+  }
+  50% { 
+    border-color: rgba(0, 212, 255, 0.6);
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+  }
+}
+
+.loading-pulse-border {
+  animation: loading-pulse-border 2s ease-in-out infinite;
+}
+
+/* 成功状态 - 绿色闪烁 */
+@keyframes success-flash {
+  0%, 100% { 
+    box-shadow: 0 0 0 rgba(0, 255, 136, 0);
+  }
+  50% { 
+    box-shadow: 0 0 20px rgba(0, 255, 136, 0.4);
+  }
+}
+
+.success-flash {
+  animation: success-flash 0.6s ease-out;
+}
+
+/* 错误抖动 */
+@keyframes error-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-6px); }
+  80% { transform: translateX(6px); }
+}
+
+.error-shake {
+  animation: error-shake 0.4s ease-in-out;
 }

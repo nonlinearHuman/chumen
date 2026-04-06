@@ -37,7 +37,17 @@ export const AgentCard: React.FC<AgentCardProps> = ({
   if (compact) {
     return (
       <div
+        role="button"
+        tabIndex={0}
+        aria-label={`${agent.nameCN}，${agent.role}，${label}`}
+        aria-pressed={isActive}
         onClick={onClick}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onClick?.();
+          }
+        }}
         className="relative floating-card rounded-chumen-lg cursor-pointer select-none"
         style={{
           padding: '10px 12px',

@@ -4,6 +4,7 @@
 
 import React, { useState } from 'react';
 import { Scene } from '@/types/agent';
+import { Trophy } from 'lucide-react';
 
 interface BottomBarProps {
   isPlaying: boolean;
@@ -233,6 +234,23 @@ export const BottomBar: React.FC<BottomBarProps> = ({
 
       {/* Quick actions */}
       <div className="flex items-center gap-2">
+        {/* 排行榜按钮 */}
+        <button
+          className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-display
+            transition-all hover:brightness-110 active:scale-95"
+          style={{
+            background: 'rgba(0,212,255,0.08)',
+            border: '1px solid rgba(0,212,255,0.2)',
+            color: '#00d4ff',
+          }}
+          onClick={() => {
+            window.dispatchEvent(new CustomEvent('chumen:toggle-leaderboard'));
+          }}
+        >
+          <Trophy className="w-3.5 h-3.5" />
+          <span className="hidden sm:block">排行榜</span>
+        </button>
+
         {/* NPC trigger — dice roll style */}
         <button
           onClick={onNPCTrigger}

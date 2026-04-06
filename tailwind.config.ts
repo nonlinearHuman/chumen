@@ -67,9 +67,9 @@ module.exports = {
         'glow-epic': '0 0 16px rgba(168, 85, 247, 0.6)',
       },
       borderRadius: {
-        'chumen-sm': '6px',
+        'chumen-sm': '4px',
         'chumen-md': '8px',
-        'chumen-lg': '12px',
+        'chumen-lg': '16px',
       },
       spacing: {
         'xs': '4px',
