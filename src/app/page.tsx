@@ -248,7 +248,7 @@ export default function Home() {
         />
 
         {/* Main layout — full viewport below header */}
-        <div className={`${isMobile ? 'flex flex-col h-[calc(100vh-64px)]' : 'flex h-[calc(100vh-64px)]'}`}>
+        <div className={`${isMobile ? 'flex flex-col h-[calc(100vh-64px)] pt-[64px]' : 'flex h-[calc(100vh-64px)]'}`}>
 
           {/* ══════════════════════════════════════════════════════════
               LEFT — Floating Agent Sidebar
@@ -662,7 +662,7 @@ export default function Home() {
           onOpenTimeline={() => setShowTimeline(true)} onSave={handleSave}
           isMobile={isMobile}
         />
-        <div className={`${isMobile ? 'px-1 py-3' : 'max-w-5xl mx-auto px-4 py-6'}`}>
+        <div className={`${isMobile ? 'px-1 py-3 pt-[68px]' : 'max-w-5xl mx-auto px-4 py-6'}`}>
           <div className={`bg-gray-900 ${isMobile ? 'rounded-none p-0' : 'rounded-xl p-4'}`}>
             <PixelWorld isMobile={isMobile} />
           </div>
@@ -688,7 +688,7 @@ export default function Home() {
         onOpenTimeline={() => setShowTimeline(true)} onSave={handleSave}
         isMobile={isMobile}
       />
-      <main className={`${isMobile ? 'px-1 py-3' : 'max-w-4xl mx-auto px-4 py-6'}`}>
+      <main className={`${isMobile ? 'px-1 py-3 pt-[68px]' : 'max-w-4xl mx-auto px-4 py-6'}`}>
         <NFTMarket isMobile={isMobile} />
       </main>
       {showTutorialOverlay && (
